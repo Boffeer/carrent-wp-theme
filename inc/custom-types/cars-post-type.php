@@ -274,7 +274,43 @@ function filter_cars() {
         'ids' => $free_cars_ids,
         'search_start' => $search_start,
         'search_end' => $search_end,
-        'current_lang' => $current_language,
     ), JSON_UNESCAPED_UNICODE);
+    wp_die();
+}
+
+function fetch_car_bookings($car_id) {
+    $api_token = carbon_get_theme_option('rentprog_api');
+    $token = fetch_token($api_token);
+
+    $data_url = 'https://rentprog.pro/api/v1/public/car_data_with_bookings';
+    $headers = [
+        'Authorization' => $token
+    ];
+    $body = array(
+        "car_id" => $car_id,
+    );
+    $data_response = wp_remote_get($data_url, [
+        'headers' => $headers,
+        'body' => $body,
+    ]);
+
+    if (is_wp_error($data_response)) {
+        $error_message = $data_response->get_error_message();
+    } else {
+        $data_body = wp_remote_retrieve_body($data_response);
+        $data = json_decode($data_body, true);
+        return $data;
+    }
+}
+
+add_action('wp_ajax_get_car_bookings', 'get_car_bookings');
+add_action('wp_ajax_nopriv_get_car_bookings', 'get_car_bookings');
+function get_car_bookings() {
+
+    $car_id = $_POST['id'];
+    echo json_encode(array(
+        'id' => fetch_car_bookings($car_id),
+    ));
+
     wp_die();
 }

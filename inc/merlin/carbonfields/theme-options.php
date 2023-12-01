@@ -17,8 +17,11 @@ Container::make('theme_options', 'theme_settings',  'Theme settings')
             ->set_width(20),
         Field::make('text', 'rentprog_api', 'rentprog.ru api key')
             ->set_width(50),
-        Field::make('text', 'currency', 'Currency')
-            ->set_width(20),
+        Field::make('text', 'currency', 'Currency'),
+        Field::make('text', 'stripe_public_key', 'Stripe Public Key')
+            ->set_width(50),
+        Field::make('text', 'stripe_secret_key', 'Stripe Secret Key')
+            ->set_width(50),
 
 		Field::make('header_scripts', 'crb_header_script', 'Header Script'),
 		Field::make('footer_scripts', 'crb_footer_script', 'Footer Script'),

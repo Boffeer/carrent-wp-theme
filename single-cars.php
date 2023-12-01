@@ -24,7 +24,7 @@ get_header();
     </div>
 </div>
 
-<section class="section product-hero">
+<section class="section product-hero" data-crmid="<?php echo carbon_get_the_post_meta('rentprog_id'); ?>">
     <div class="container product-hero__container">
         <div class="product-hero__main">
 
@@ -66,18 +66,91 @@ get_header();
         <div class="product-hero__info">
             <h3 class="product-hero__info-title">Выберите свободную дату</h3>
             <div class="product-hero__bookform">
+                <div class="product-hero__info-columns product-hero__bookform-head">
+                    <p class="product-hero__info-title">Start</p>
+                    <p class="product-hero__info-title">End</p>
+                </div>
                 <div class="product-hero__calendar b_rangepicker b_datepicker--calendar">
-                    <input class="input__field" type="text">
-                    <input class="input__field" type="text">
+                    <input class="input__field" name="date_start" type="text">
+                    <input class="input__field" name="date_end" type="text">
+                </div>
+
+                <?php
+                    $homepage_id = pll_get_post(get_option('page_on_front'));
+                    $locations_from = explode_textarea(carbon_get_post_meta($homepage_id, 'location_start_names'));
+                    $locations_to = explode_textarea(carbon_get_post_meta($homepage_id, 'location_end_names'));
+                ?>
+                <div class="product-hero__form product-hero__info-columns">
+                    <div class="select hero__bookform-select">
+                        <select class="select__input"
+                                name="location_start"
+                                tabindex="-1"
+                                required>
+                            <option value="" disabled selected>Pick-up location</option>
+                            <?php foreach ($locations_from as $location) : ?>
+                                <option value="<?php echo $location; ?>"><?php echo $location; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button class="select__toggle" type="button">Pick-up location</button>
+                        <ul class="select__list">
+                            <?php foreach ($locations_from as $location) : ?>
+                                <li>
+                                    <button class="select__option" type="button"><?php echo $location; ?></button>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                    <div class="select hero__bookform-select">
+                        <!-- <div class="select__label">Откуда вы узнали о нас?</div> -->
+                        <select class="select__input"
+                                name="location_end"
+                                tabindex="-1"
+                                required>
+                            <!-- <option value="" disabled selected>Выберите место получения</option> -->
+                            <option value="" disabled selected>Drop-off location</option>
+                            <?php foreach ($locations_to as $location) : ?>
+                                <option value="<?php echo $location; ?>"><?php echo $location; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button class="select__toggle" type="button">Drop-off location</button>
+                        <ul class="select__list">
+                            <?php foreach ($locations_to as $location) : ?>
+                                <li>
+                                    <button class="select__option" type="button"><?php echo $location; ?></button>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                    <div class="timepicker hero__bookform-timepicker"
+                         data-min="08:00"
+                         data-max="20:00"
+                         data-step="15"
+                    >
+                        <div class="timepicker__control">
+                            <div class="timepicker__drag"></div>
+                        </div>
+                        <input class="timepicker__value" type="text" name="time_start" inputmode="numeric">
+                    </div>
+                    <div class="timepicker hero__bookform-timepicker"
+                         data-min="08:00"
+                         data-max="20:00"
+                         data-step="15"
+                    >
+                        <div class="timepicker__control">
+                            <div class="timepicker__drag"></div>
+                        </div>
+                        <input class="timepicker__value" type="text" name="time_end" inputmode="numeric" value="14:10">
+                    </div>
                 </div>
                 <div class="product-hero__bookform-tariffs">
                     <h3 class="product-hero__bookform-tariffs-title">Тарифы</h3>
 
                     <?php
-                    $prices = [];
+                        $prices = [];
                         $prices = explode(',', carbon_get_the_post_meta('prices'));
                         $tariff_names = explode_textarea(carbon_get_post_meta(HOMEPAGE_ID, 'price_tariffs'));
                     ?>
+
                     <?php foreach ($prices as $key => $price) : ?>
                     <div class="product-hero__bookform-tariff">
                         <div class="product-hero__bookform-tariff-price">
