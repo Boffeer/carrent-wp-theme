@@ -121,47 +121,6 @@ function register_cars_fields() {
             }
          */
         ))
-
-        ->add_tab('Первый экран', array(
-            Field::make( 'textarea', 'title', __( 'Заголовок' ) ),
-            Field::make( 'textarea', 'caption', __( 'Подпись под заголовоком' ) )
-                ->set_help_text('Отображается на странице проекта в блоке «следующий проект» при выборе этого проекта'),
-            Field::make( 'textarea', 'excerpt', __( 'Краткое описание' ) )
-        ))
-        ->add_tab('Экраны в конце', array(
-            Field::make( 'radio', 'show_quiz', __( 'Отображение квиза?' ) )
-                ->set_options( array(
-                    'show' => 'Показывать',
-                    'hide' => 'Скрывать',
-                ) ),
-
-            Field::make( 'image', 'floor_plan_img', __( 'Отображаемая картинка планировки' ) )
-                ->set_help_text('Если не выбирать картинку, то блок не отобразится')
-                ->set_width(50),
-
-            Field::make( 'textarea', 'floor_plan_title', __( 'Заголовок блока с планировкой' ) )
-                ->set_default_value('[hl]Планировка квартиры\n[/hl]'),
-            Field::make( 'textarea', 'floor_plan_desc', __( 'Описание блока с планировкой' ) ),
-            Field::make( 'file', 'floor_plan_file', __( 'Файл планировки' ) )
-                ->set_value_type('url'),
-
-            Field::make( 'association', 'review', __( 'Отзыв' ) )
-                ->set_types( array(
-                    array(
-                        'type'      => 'post',
-                        'post_type' => 'reviews',
-                    )
-                ) ),
-
-            Field::make( 'association', 'cars_next', __( 'Следующий проект' ) )
-                ->set_max(1)
-                ->set_types( array(
-                    array(
-                        'type'      => 'post',
-                        'post_type' => 'cars',
-                    )
-                ) )
-        ))
 		;
 
 
@@ -188,45 +147,134 @@ function enqueue_custom_js_for_cars() {
 add_action('wp_ajax_filter_cars', 'filter_cars');
 add_action('wp_ajax_nopriv_filter_cars', 'filter_cars');
 
-function filter_cars() {
-    $rentprog_api = carbon_get_theme_option('rentprog_api');
-    // Шаг 1: Получение токена
-    $token_url = 'https://rentprog.pro/api/v1/public/get_token?company_token='. $rentprog_api;
+function fetch_token($api_token) {
+    $token_url = 'https://rentprog.pro/api/v1/public/get_token?company_token='. $api_token;
     $token_response = wp_remote_get($token_url);
 
     if (is_wp_error($token_response)) {
         // Обработка ошибки запроса токена
         $error_message = $token_response->get_error_message();
-        echo "Ошибка запроса токена: " . $error_message;
+//        echo "Ошибка запроса токена: " . $error_message;
+        return false;
     } else {
         $token_body = wp_remote_retrieve_body($token_response);
         $token_data = json_decode($token_body, true);
 
         // Получение значения токена
         $token = $token_data['token'];
-
-        // Шаг 2: Запрос данных с использованием токена
-        $data_url = 'https://rentprog.pro/api/v1/public/free_cars';
-        $headers = [
-            'Authorization' => 'Bearer ' . $token
-        ];
-        $data_response = wp_remote_get($data_url, [
-            'headers' => $headers
-        ]);
-
-        if (is_wp_error($data_response)) {
-            // Обработка ошибки запроса данных
-            $error_message = $data_response->get_error_message();
-            echo "Ошибка запроса данных: " . $error_message;
-        } else {
-            $data_body = wp_remote_retrieve_body($data_response);
-            $data = json_decode($data_body, true);
-
-            // Используйте переменную $data для обработки данных из ответа
-
-            // Пример вывода данных
-            echo "Данные из API: ";
-            print_r($data);
-        }
+        return $token;
     }
+}
+
+function fetch_free_cars($api_token, $start_date, $end_date) {
+    $token = fetch_token($api_token);
+
+
+    $data_url = 'https://rentprog.pro/api/v1/public/free_cars';
+    $headers = [
+        'Authorization' => $token
+    ];
+    $body = array(
+        "start_date" => $start_date,
+        "end_date" => $end_date,
+    );
+    $data_response = wp_remote_get($data_url, [
+        'headers' => $headers,
+        'body' => $body,
+    ]);
+
+    if (is_wp_error($data_response)) {
+        // Обработка ошибки запроса данных
+        $error_message = $data_response->get_error_message();
+//        echo "Ошибка запроса данных: " . $error_message;
+    } else {
+        $data_body = wp_remote_retrieve_body($data_response);
+        $data = json_decode($data_body, true);
+
+        // Используйте переменную $data для обработки данных из ответа
+
+        // Пример вывода данных
+//        echo "Данные из API: ";
+        return $data;
+    }
+
+}
+
+function get_car_content($id) {
+
+    $gallery = carbon_get_post_meta($id, 'photos');
+
+    $thumb = '';
+    if (!empty($gallery)) {
+        $thumb = get_image_url_by_id($gallery[0]);
+    }
+
+    $prices_list = explode(',', carbon_get_post_meta($id, 'prices'));
+    $last_index = count($prices_list) - 1;
+    $price = $prices_list[$last_index];
+
+    $car = array(
+        'id' => $id,
+        'thumb' => $thumb,
+        'title' => carbon_get_post_meta($id, 'car_name'),
+        'url' => get_the_permalink($id),
+        'price_cheap' => $price,
+        'fuel' => carbon_get_post_meta($id,'fuel'),
+        'number_seats' => carbon_get_post_meta($id, 'number_seats'),
+        'trunk_volume' => carbon_get_post_meta($id, 'trunk_volume'),
+        'transmission' => carbon_get_post_meta($id, 'transmission'),
+        'currency' => carbon_get_theme_option('currency'),
+        'text_price_hint' => '*При аренде от 30 до 45 дней',
+        'text_book' => 'Забронировать машину',
+    );
+    return $car;
+}
+
+function filter_cars() {
+    $rentprog_api = carbon_get_theme_option('rentprog_api');
+
+    $current_language = $_POST['lang'];
+    $search_start = "{$_POST['date_start']} {$_POST['time_start']}";
+    $search_end = "{$_POST['date_end']} {$_POST['time_end']}";
+    $free_cars = fetch_free_cars($rentprog_api, $search_start, $search_end);
+    $free_cars_ids = array();
+    foreach ($free_cars as $car) {
+        $free_cars_ids[] = $car['id'];
+    }
+
+    $args = array(
+        'post_type' => 'cars', // Replace with your post type
+        'posts_per_page' => -1, // Use -1 to retrieve all posts
+        'lang'           => $current_language, // Указываем текущий язык
+        'meta_query' => array(
+            array(
+                'key' => 'rentprog_id', // Replace with your actual custom field name
+                'value' => $free_cars_ids, // Replace with the value you want to filter by
+                'compare' => 'IN', // Use '=' for exact match
+//                 'type'    => 'CHAR', // You can specify the data type if needed
+            ),
+        ),
+    );
+
+    $query = new WP_Query($args);
+
+    $free_cars = array();
+    if ($query->have_posts()) :
+        while ($query->have_posts()) : $query->the_post();
+            $car = get_car_content(get_the_ID());
+            $free_cars[] = $car;
+        endwhile;
+        wp_reset_postdata();
+    else :
+        // No posts found
+    endif;
+
+    echo json_encode(array(
+        'cars' => $free_cars,
+        'ids' => $free_cars_ids,
+        'search_start' => $search_start,
+        'search_end' => $search_end,
+        'current_lang' => $current_language,
+    ), JSON_UNESCAPED_UNICODE);
+    wp_die();
 }

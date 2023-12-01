@@ -32,10 +32,19 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                 <h2 class="section-title hero__title">
                     <?php echo typograph($title); ?>
                 </h2>
-                <div class="bookform hero__bookform js_form"
+                <div class="bookform hero__bookform js_form js_form--no-lock-button js_form--no-reset"
                      data-route="<?php echo FORM_URLS['ajax']?>"
                      data-action="filter_cars"
                 >
+                    <input
+                            class="is-hidden"
+                            name="lang"
+                            type="text"
+                            readonly
+                            required
+                            hidden
+                            value="<?php echo pll_current_language(); ?>"
+                    >
                     <div class="select hero__bookform-select">
                         <select class="select__input"
                                 name="location_start"
@@ -125,10 +134,10 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                     <button class="button-primary hero__bookform-submit js_form__submit">Подобрать автомобиль</button>
                 </div>
             </div>
+
+            <?php $banners = carbon_get_the_post_meta('banners'); ?>
+            <?php if (!empty($banners)) : ?>
             <div class="hero-gallery">
-                <?php
-                    $banners = carbon_get_the_post_meta('banners');
-                ?>
                 <div class="swiper hero-gallery__swiper">
                     <div class="swiper-wrapper">
                         <?php foreach ($banners as $banner) : ?>
@@ -156,8 +165,10 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                     <div class="swiper-button-next hero-gallery__button-next"></div>
                 </div>
             </div>
+            <?php endif; ?>
 
             <?php $bullets = carbon_get_the_post_meta('bullets'); ?>
+            <?php if (!empty($bullets)) : ?>
             <div class="hero__bullets">
                 <?php foreach ($bullets as $bullet) :  ?>
                 <div class="bullet-card">
@@ -176,27 +187,37 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                 </div>
                 <?php endforeach; ?>
             </div>
+            <?php endif; ?>
         </div>
     </section>
 
+    <?php
+    $cars_args = array(
+        'post_type'      => 'cars',
+        'posts_per_page' => -1,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'post_status'    => 'publish',
+    );
+    $cars = new WP_Query($cars_args);
+    ?>
+    <?php if ($cars->have_posts()) : ?>
     <section class="shelf section" id="cars">
         <div class="shelf__container container">
             <h2 class="section-title shelf__title">
                 Выберите свой <br>автомобиль
             </h2>
             <div class="shelf__content">
-                <?php get_template_part( 'template-parts/content', 'cars' ); ?>
-                <?php get_template_part( 'template-parts/content', 'cars' ); ?>
-                <?php get_template_part( 'template-parts/content', 'cars' ); ?>
-                <?php get_template_part( 'template-parts/content', 'cars' ); ?>
-                <?php get_template_part( 'template-parts/content', 'cars' ); ?>
-                <?php get_template_part( 'template-parts/content', 'cars' ); ?>
+                <?php while ($cars->have_posts()) : $cars->the_post(); ?>
+                    <?php get_template_part( 'template-parts/content', 'cars' ); ?>
+                <?php endwhile; wp_reset_query(); ?>
             </div>
-            <div class="shelf__buttons">
+            <div class="shelf__buttons is-hidden">
                 <button class="button-secondary shelf__button-more">Показать еще машины</button>
             </div>
         </div>
     </section>
+    <?php endif; ?>
 
 
 <?php $reviews_ids = get_carbon_association_ids(carbon_get_the_post_meta('home_reviews')); ?>
