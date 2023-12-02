@@ -51,8 +51,26 @@ function register_car_booking_fields() {
             Field::make('text', 'phone', 'phone'),
             Field::make('text', 'email', 'email'),
             Field::make('text', 'id', 'id'),
-            Field::make('text', 'amount_total', 'amount_total (cents)'),
+            Field::make('text', 'amount', 'amount (cents)'),
             Field::make('text', 'created', 'created'),
+            Field::make('textarea', 'json', 'json'),
+
+            Field::make('text', 'product_id', 'product_id'),
+            Field::make('text', 'payment_intent', 'payment_intent'),
+            Field::make('text', 'booking_id', 'booking_id'),
+            Field::make('text', 'crm_booking_id', 'crm_booking_id'),
+            Field::make('text', 'date_start', 'date_start')
+                ->set_width(50),
+            Field::make('text', 'date_end', 'date_end')
+                ->set_width(50),
+            Field::make('text', 'time_start', 'time_start')
+                ->set_width(50),
+            Field::make('text', 'time_end', 'time_end')
+                ->set_width(50),
+            Field::make('text', 'location_start', 'location_start')
+                ->set_width(50),
+            Field::make('text', 'location_end', 'location_end')
+                ->set_width(50),
         ))
 		;
 }
@@ -66,3 +84,22 @@ function restrict_car_bookings_access() {
     }
 }
 add_action('template_redirect', 'restrict_car_bookings_access');
+
+// Добавьте следующий код в файл functions.php вашей темы или в свой собственный плагин
+
+//function custom_change_title_for_car_booking($title, $post_id) {
+//    // Проверка, является ли текущая запись типом "car_booking"
+//    if (get_post_type($post_id) === 'car_booking') {
+//        // Ваш код для динамического определения нового заголовка
+//        $new_title = 'Новый Заголовок';
+//
+//        // Возвращаем новый заголовок
+//        return $new_title;
+//    }
+//
+//    // Возвращаем оригинальный заголовок для других типов записей
+//    return $title;
+//}
+
+// Регистрация фильтра
+//add_filter('the_title', 'custom_change_title_for_car_booking', 10, 2);
