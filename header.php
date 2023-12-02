@@ -32,7 +32,7 @@
 
     <header class="header">
         <div class="container header__container">
-            <a href="#" class="header__logo logo">
+            <a href="/" class="header__logo logo">
                 <!-- <img src="./img/common/logo-header.svg" alt="" class="logo__img"> -->
                 <?php echo $logo; ?>
             </a>

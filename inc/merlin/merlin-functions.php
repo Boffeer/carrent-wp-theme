@@ -22,6 +22,7 @@ require MERLIN_INC . '/helpers/text-helpers.php';
 require MERLIN_INC . '/helpers/transformers-helpers.php';
 require MERLIN_INC . '/helpers/ajax-archive-helpers.php';
 require MERLIN_INC . '/helpers/post-helpers.php';
+require MERLIN_INC . '/helpers/date-helpers.php';
 
 require MERLIN_INC . '/shortcodes.php';
 require MERLIN_INC . '/quick-templates.php';

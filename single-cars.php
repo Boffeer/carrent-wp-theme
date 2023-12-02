@@ -24,7 +24,7 @@ get_header();
     </div>
 </div>
 
-<section class="section product-hero" data-crmid="<?php echo carbon_get_the_post_meta('rentprog_id'); ?>">
+<section class="section product-hero" data-id="<?php the_ID(); ?>">
     <div class="container product-hero__container">
         <div class="product-hero__main">
 
@@ -65,7 +65,11 @@ get_header();
         </div>
         <div class="product-hero__info">
             <h3 class="product-hero__info-title">Выберите свободную дату</h3>
-            <div class="product-hero__bookform">
+            <div class="product-hero__bookform js_form js_form--no-lock-button js_form--no-reset"
+                 data-route="<?php echo FORM_URLS['ajax']?>"
+                 data-action="get_stripe_paylink"
+            >
+                <input class="is-hidden" hidden name="post_id" type="text" value="<?php the_id(); ?>">
                 <div class="product-hero__info-columns product-hero__bookform-head">
                     <p class="product-hero__info-title">Start</p>
                     <p class="product-hero__info-title">End</p>
@@ -81,6 +85,26 @@ get_header();
                     $locations_to = explode_textarea(carbon_get_post_meta($homepage_id, 'location_end_names'));
                 ?>
                 <div class="product-hero__form product-hero__info-columns">
+                    <div class="timepicker hero__bookform-timepicker"
+                         data-min="08:00"
+                         data-max="20:00"
+                         data-step="15"
+                    >
+                        <div class="timepicker__control">
+                            <div class="timepicker__drag"></div>
+                        </div>
+                        <input class="timepicker__value" type="text" name="time_start" inputmode="numeric">
+                    </div>
+                    <div class="timepicker hero__bookform-timepicker"
+                         data-min="08:00"
+                         data-max="20:00"
+                         data-step="15"
+                    >
+                        <div class="timepicker__control">
+                            <div class="timepicker__drag"></div>
+                        </div>
+                        <input class="timepicker__value" type="text" name="time_end" inputmode="numeric" value="14:10">
+                    </div>
                     <div class="select hero__bookform-select">
                         <select class="select__input"
                                 name="location_start"
@@ -121,26 +145,25 @@ get_header();
                             <?php endforeach; ?>
                         </ul>
                     </div>
-                    <div class="timepicker hero__bookform-timepicker"
-                         data-min="08:00"
-                         data-max="20:00"
-                         data-step="15"
-                    >
-                        <div class="timepicker__control">
-                            <div class="timepicker__drag"></div>
-                        </div>
-                        <input class="timepicker__value" type="text" name="time_start" inputmode="numeric">
-                    </div>
-                    <div class="timepicker hero__bookform-timepicker"
-                         data-min="08:00"
-                         data-max="20:00"
-                         data-step="15"
-                    >
-                        <div class="timepicker__control">
-                            <div class="timepicker__drag"></div>
-                        </div>
-                        <input class="timepicker__value" type="text" name="time_end" inputmode="numeric" value="14:10">
-                    </div>
+
+                    <label class="input js_form__control">
+                        <input
+                                class="input__field"
+                                name="user_phone"
+                                type="tel"
+                                placeholder="Phone"
+                                required
+                        >
+                    </label>
+                    <label class="input js_form__control">
+                        <input
+                                class="input__field"
+                                name="user_email"
+                                type="email"
+                                placeholder="Email"
+                                required
+                        >
+                    </label>
                 </div>
                 <div class="product-hero__bookform-tariffs">
                     <h3 class="product-hero__bookform-tariffs-title">Тарифы</h3>
@@ -163,6 +186,7 @@ get_header();
                     </div>
                     <?php endforeach; ?>
 
+                    <button class="button-primary hero__bookform-submit js_form__submit">Подобрать автомобиль</button>
                     <a href="#" class="button-primary product-hero__bookform-button">Оплатить бронь в Stripe</a>
                     <p class="product-hero__bookform-caption">
                         оплачивая, я соглашусь и принимаю <a class="link" href="#">политику конфиденциальности</a> и <a class="link" href="#">terms and conditions</a>

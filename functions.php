@@ -119,6 +119,7 @@ require THEME_INC . '/custom-types/cars-post-type.php';
 require THEME_INC . '/custom-types/faq-post-type.php';
 require THEME_INC . '/custom-types/news-post-type.php';
 require THEME_INC . '/custom-types/reviews-post-type.php';
+require THEME_INC . '/custom-types/car-booking-post-type.php';
 //require THEME_INC . '/custom-types/reviews-post-type.php';
 //require THEME_INC . '/custom-types/team-post-type.php';
 
@@ -127,6 +128,7 @@ require THEME_INC . '/custom-types/reviews-post-type.php';
  */
 require THEME_INC . '/pages-meta/homepage-meta.php';
 
+require THEME_INC . '/crrt/functions.php';
 /*
 function reviews_posts_navigation() {
     $prev_link = get_previous_posts_link( 'Свежие отзывы' );

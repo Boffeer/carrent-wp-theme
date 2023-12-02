@@ -21,9 +21,9 @@
 
 <footer class="footer">
     <div class="container footer__container">
-        <a href="#" class="footer__logo logo">
-            <!-- <img src="./img/common/logo-header.svg" alt="" class="logo__img"> -->
-            carrent
+        <a href="/" class="footer__logo logo">
+            <!-- <img src="<?php echo THEME_STATIC; ?>/img/common/logo-header.svg" alt="" class="logo__img"> -->
+            <?php echo $logo; ?>
         </a>
 
         <div class="footer__links">
@@ -56,7 +56,7 @@
             </a>
             <a href="#" class="footer__location">
                 <svg class="footer__location-icon">
-                    <use xlink:href="./img/common.crrt/icon-geo.svg#icon-geo" />
+                    <use xlink:href="<?php echo THEME_STATIC; ?>/img/common.crrt/icon-geo.svg#icon-geo" />
                 </svg>
                 <span class="footer__location-address">109316, Мадейра, ул. За ухо, 25</span>
             </a>
