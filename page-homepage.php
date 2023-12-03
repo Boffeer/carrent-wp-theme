@@ -87,29 +87,17 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                     </div>
                     <div class="hero__bookform-range b_rangepicker" data-lang="ru">
                         <label class="input b_datepicker js_form__control" data-lang="ru">
-                            <span class="b_datepicker__display">Start date</span>
+<!--                            <span class="b_datepicker__display">Start date</span>-->
                             <input
                                     class="input__field"
-                                    name="date_start"
                                     type="text"
-                                    placeholder="Start date"
+                                    placeholder="Dates"
                                     readonly
                                     required
                             >
                         </label>
-
-                        <label class="input b_datepicker js_form__control" data-lang="ru">
-                            <span class="b_datepicker__display">End date</span>
-                            <input
-                                    class="input__field"
-                                    name="date_end"
-                                    type="text"
-                                    placeholder="End date"
-                                    readonly
-                                    required
-                            >
-                        </label>
-
+                        <input type="text" name="date_start" hidden readonly>
+                        <input type="text" name="date_end" hidden readonly>
                     </div>
                     <div class="timepicker hero__bookform-timepicker"
                          data-min="08:00"

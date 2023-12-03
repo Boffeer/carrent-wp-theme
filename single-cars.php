@@ -24,7 +24,9 @@ get_header();
     </div>
 </div>
 
-<section class="section product-hero" data-id="<?php the_ID(); ?>">
+<?php $disabled_dates = get_car_bookings_timestamps(get_the_ID()); ?>
+
+    <section class="section product-hero" data-id="<?php the_ID(); ?>">
     <div class="container product-hero__container">
         <div class="product-hero__main">
 
@@ -70,19 +72,26 @@ get_header();
                  data-action="get_stripe_paylink"
             >
                 <input class="is-hidden" hidden name="post_id" type="text" value="<?php the_id(); ?>">
-                <div class="product-hero__info-columns product-hero__bookform-head">
-                    <p class="product-hero__info-title">Start</p>
-                    <p class="product-hero__info-title">End</p>
+                <?php
+                    $date_start = $_GET['date_start'];
+                    $date_end = $_GET['date_end'];
+                ?>
+                <div class="product-hero__calendar b_rangepicker b_rangepicker--inline"
+                     data-disabled="<?php echo $disabled_dates; ?>"
+                     data-hour-gap="<?php echo carbon_get_theme_option('min_hour_booking_gap'); ?>"
+                     data-default-date="<?php echo $date_start.','.$date_end; ?>"
+                >
+                    <input class="input__field" type="text">
+                    <input class="is-hidden" name="date_start" type="text">
+                    <input class="is-hidden" name="date_end" type="text">
                 </div>
-                <div class="product-hero__calendar b_rangepicker b_datepicker--calendar">
-                    <input class="input__field" name="date_start" type="text">
-                    <input class="input__field" name="date_end" type="text">
-                </div>
+
 
                 <?php
                     $homepage_id = pll_get_post(get_option('page_on_front'));
                     $locations_from = explode_textarea(carbon_get_post_meta($homepage_id, 'location_start_names'));
                     $locations_to = explode_textarea(carbon_get_post_meta($homepage_id, 'location_end_names'));
+
                 ?>
                 <div class="product-hero__form product-hero__info-columns">
                     <div class="timepicker hero__bookform-timepicker"
@@ -186,8 +195,7 @@ get_header();
                     </div>
                     <?php endforeach; ?>
 
-                    <button class="button-primary hero__bookform-submit js_form__submit">Подобрать автомобиль</button>
-                    <a href="#" class="button-primary product-hero__bookform-button">Оплатить бронь в Stripe</a>
+                    <button class="button-primary product-hero__bookform-submit js_form__submit">Подобрать автомобиль</button>
                     <p class="product-hero__bookform-caption">
                         оплачивая, я соглашусь и принимаю <a class="link" href="#">политику конфиденциальности</a> и <a class="link" href="#">terms and conditions</a>
                     </p>

@@ -239,7 +239,7 @@ function filter_cars() {
     $free_cars = fetch_free_cars($rentprog_api, $search_start, $search_end);
     $free_cars_ids = array();
     foreach ($free_cars as $car) {
-        $free_cars_ids[] = $car['id'];
+        $free_cars_ids[] = "{$car['id']}";
     }
 
     $args = array(
@@ -259,21 +259,26 @@ function filter_cars() {
     $query = new WP_Query($args);
 
     $free_cars = array();
-    if ($query->have_posts()) :
-        while ($query->have_posts()) : $query->the_post();
-            $car = get_car_content(get_the_ID());
-            $free_cars[] = $car;
-        endwhile;
-        wp_reset_postdata();
-    else :
-        // No posts found
-    endif;
+    if (!empty($free_cars_ids)) {
+        if ($query->have_posts()) :
+            while ($query->have_posts()) : $query->the_post();
+                $car = get_car_content(get_the_ID());
+                $free_cars[] = $car;
+            endwhile;
+            wp_reset_postdata();
+        else :
+            // No posts found
+        endif;
+    }
 
     echo json_encode(array(
         'cars' => $free_cars,
         'ids' => $free_cars_ids,
         'search_start' => $search_start,
         'search_end' => $search_end,
+        'messages' => array(
+            'empty' => 'Все машины заняты, выберите другие даты или время',
+        ),
     ), JSON_UNESCAPED_UNICODE);
     wp_die();
 }
@@ -303,14 +308,30 @@ function fetch_car_bookings($car_id) {
     }
 }
 
-add_action('wp_ajax_get_car_bookings', 'get_car_bookings');
-add_action('wp_ajax_nopriv_get_car_bookings', 'get_car_bookings');
-function get_car_bookings() {
+//add_action('wp_ajax_get_car_bookings', 'get_car_bookings');
+//add_action('wp_ajax_nopriv_get_car_bookings', 'get_car_bookings');
+function get_car_bookings($car_id) {
 
-    $car_id = $_POST['id'];
-    echo json_encode(array(
-        'id' => fetch_car_bookings($car_id),
-    ));
+    $rentprog_id = carbon_get_post_meta($car_id, 'rentprog_id');
 
-    wp_die();
+//    echo json_encode(array(
+//        'id' => fetch_car_bookings($rentprog_id),
+//    ));
+    return fetch_car_bookings($rentprog_id);
+
+//    wp_die();
+}
+
+function get_car_bookings_timestamps($id) {
+    $bookings = get_car_bookings($id)['active_bookings'];
+
+    $active_bookings = array();
+    foreach ($bookings as $book) {
+        $disabled_dates = get_dates_range($book['start_date'], $book['end_date']);
+        foreach ($disabled_dates as $date) {
+            $active_bookings[] = $date * 1000;
+        }
+    }
+
+    return json_encode($active_bookings);
 }

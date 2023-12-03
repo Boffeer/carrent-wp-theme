@@ -25,7 +25,7 @@ function get_dates_range($startDateString, $endDateString, $returnType = 'array'
     $endTimestamp = $endDate->getTimestamp();
 
     if ($returnType === 'array') {
-        return array_merge([$endTimestamp], $resultDates);
+        return $resultDates;
 //        return array_merge([$startTimestamp, $endTimestamp], $resultDates);
     } else {
         $resultTimestamps = array_combine(array_map(function ($date) {
@@ -69,4 +69,18 @@ function getDatesRange($startDateString, $endDateString, $returnType = 'array') 
 
         return array_merge(['startTimestamp' => $startTimestamp, 'endTimestamp' => $endTimestamp], $resultTimestamps);
     }
+}
+
+function convert_rentprog_date($timestamp) {
+    // Time zone
+    $timezone = new DateTimeZone('Europe/Moscow');
+
+    // Create a DateTime object with the given timestamp and time zone
+    $date = new DateTime('@' . $timestamp);
+    $date->setTimeZone($timezone);
+
+    // Format the date as required
+    $formattedDateString = $date->format('D M d Y H:i:s T');
+
+    return $formattedDateString;
 }

@@ -22,6 +22,7 @@ Container::make('theme_options', 'theme_settings',  'Theme settings')
             ->set_width(50),
         Field::make('text', 'stripe_secret_key', 'Stripe Secret Key')
             ->set_width(50),
+        Field::make('text', 'min_hour_booking_gap', 'Minimum Hour Gap Between Bookings'),
 
 		Field::make('header_scripts', 'crb_header_script', 'Header Script'),
 		Field::make('footer_scripts', 'crb_footer_script', 'Footer Script'),

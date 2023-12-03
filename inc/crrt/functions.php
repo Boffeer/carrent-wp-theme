@@ -69,7 +69,7 @@ function get_stripe_paylink()
         ],
         'mode' => 'payment',
         'success_url' => "https://{$domain}/success?car_booking_id={$booking_id}",
-        'cancel_url' => "https://{$domain}/cancel",
+        'cancel_url' => "https://{$domain}",
         'payment_intent_data' => [
             'metadata' => [
                 'user_phone' => $user_phone,
