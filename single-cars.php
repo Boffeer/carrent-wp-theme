@@ -17,9 +17,10 @@ get_header();
 
 <?php
 $title = carbon_get_the_post_meta('car_name');
+$homepage_id = pll_get_post(get_option('page_on_front'));
 ?>
 
-<div class="breadcrumbs">
+    <div class="breadcrumbs">
     <div class="breadcrumbs__container container">
         <ul class="breadcrumbs__list">
             <li class="breadcrumbs__item"><a href="/" class="breadcrumbs__link">Главная</a></li>
@@ -92,7 +93,6 @@ $title = carbon_get_the_post_meta('car_name');
 
 
                 <?php
-                    $homepage_id = pll_get_post(get_option('page_on_front'));
                     $locations_from = explode_textarea(carbon_get_post_meta($homepage_id, 'location_start_names'));
                     $locations_to = explode_textarea(carbon_get_post_meta($homepage_id, 'location_end_names'));
 
@@ -201,7 +201,25 @@ $title = carbon_get_the_post_meta('car_name');
 
                     <button class="button-primary product-hero__bookform-submit js_form__submit">Подобрать автомобиль</button>
                     <p class="product-hero__bookform-caption">
-                        оплачивая, я соглашусь и принимаю <a class="link" href="#">политику конфиденциальности</a> и <a class="link" href="#">terms and conditions</a>
+                        <?php
+                            $link_privacy = get_carbon_association_ids(carbon_get_post_meta($homepage_id, 'link_privacy'));
+                            $link_offer = get_carbon_association_ids(carbon_get_post_meta($homepage_id, 'link_offer'));
+                        ?>
+                        оплачивая, я соглашусь и принимаю
+
+                        <?php if (isset($link_privacy[0])) : ?>
+                            <a class="link" href="<?php the_permalink($link_privacy[0]); ?>">
+                                <?php echo get_the_title($link_privacy[0]); ?>
+                            </a>
+                        <?php endif; ?>
+                        <?php if (isset($link_privacy[0])) : ?>
+                            и
+                        <?php endif; ?>
+                        <?php if (isset($link_offer[0])) : ?>
+                            <a class="link" href="<?php the_permalink($link_offer[0]); ?>">
+                                <?php echo get_the_title($link_offer[0]); ?>
+                            </a>
+                        <?php endif; ?>
                     </p>
                 </div>
             </div>

@@ -123,8 +123,10 @@ get_header();
                     </div>
                     <h3 class="faq-help__title"></h3>
                     <?php $phone = explode_textarea(THEME_OPTIONS['phones'])[0]; ?>
-                    <p class="faq-help__desc">Если возникнут вопросы, свяжитесь с нами в соцсетях или по телефону <a
-                                href="tel:<?php echo $phone; ?>" class="link"><?php echo $phone; ?></a></p>
+                    <p class="faq-help__desc">
+                        Если возникнут вопросы, свяжитесь с нами в соцсетях или по телефону
+                        <a href="<?php echo phone_to_href($phone);?>" class="link"><?php echo $phone; ?></a>
+                    </p>
 
                     <div class="faq__socials socials">
                         <?php foreach ($socials as $social) : ?>

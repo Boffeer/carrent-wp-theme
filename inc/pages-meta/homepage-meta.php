@@ -71,6 +71,24 @@ function register_homepage_fields() {
         ->add_tab('Meta', array(
             Field::make('textarea', 'price_tariffs', 'Tariff names'),
         ))
+        ->add_tab('Ссылки', array(
+            Field::make( 'association', 'link_privacy', __( 'Privacy policy' ) )
+                ->set_types( array(
+                    array(
+                        'type'      => 'post',
+                        'post_type' => 'page',
+                    )
+                ) )
+                ->set_max(1),
+            Field::make( 'association', 'link_offer', __( 'Offer' ) )
+                ->set_types( array(
+                    array(
+                        'type'      => 'post',
+                        'post_type' => 'page',
+                    )
+                ) )
+                ->set_max(1),
+        ))
     ;
 }
 

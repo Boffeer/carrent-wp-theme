@@ -15,20 +15,27 @@
 get_header();
 ?>
 
-        <h1>page</h1>
-		<?php
-		while ( have_posts() ) :
-			the_post();
+    <div class="breadcrumbs">
+        <div class="breadcrumbs__container container">
+            <ul class="breadcrumbs__list">
+                <li class="breadcrumbs__item"><a href="/" class="breadcrumbs__link">Главная</a></li>
+                <li class="breadcrumbs__item"><?php the_title(); ?></li>
+            </ul>
+        </div>
+    </div>
 
-			get_template_part( 'template-parts/content', 'page' );
 
-			// If comments are open or we have at least one comment, load up the comment template.
-			if ( comments_open() || get_comments_number() ) :
-				comments_template();
-			endif;
+    <div class="article">
+        <div class="container">
+            <h1 class="article__title section-title"><?php the_title(); ?></h1>
+        </div>
 
-		endwhile; // End of the loop.
-		?>
+        <div class="container article__container">
+            <div class="article__content wysiwyg">
+                <?php the_content(); ?>
+            </div>
+        </div>
+    </div>
 
 <?php
 get_footer();

@@ -25,15 +25,14 @@
 
     <?php
         $socials = get_socials(THEME_OPTIONS['socials']);
-//        $phones = explode_textarea(THEME_OPTIONS['phones']);
-//        $email = THEME_OPTIONS['emails'];
+        $phone = explode_textarea(THEME_OPTIONS['phones'])[0];
         $logo = THEME_OPTIONS['logo'];
     ?>
 
     <header class="header">
         <div class="container header__container">
             <a href="/" class="header__logo logo">
-                <!-- <img src="./img/common/logo-header.svg" alt="" class="logo__img"> -->
+                <!-- <img src="<?php echo THEME_STATIC; ?>/img/common/logo-header.svg" alt="" class="logo__img"> -->
                 <?php echo $logo; ?>
             </a>
 
@@ -65,13 +64,13 @@
             </div>
 
             <div class="header__contacts">
-                <a href="#" class="header__contacts-phone">
+                <a href="<?php echo phone_to_href($phone); ?>" class="header__contacts-phone">
                     <svg class="header__contacts-icon">
-                        <use xlink:href="./img/common.crrt/icon-phone.svg#icon-phone" />
+                        <use xlink:href="<?php echo THEME_STATIC; ?>/img/common.crrt/icon-phone.svg#icon-phone" />
                     </svg>
                     <span class="header__contacts-content">
                       <span class="header__contacts-label">Общие вопросы:</span>
-                      <span class="header__contacts-text">+7 (922) 506 33 22</span>
+                      <span class="header__contacts-text"><?php echo $phone; ?></span>
                     </span>
                 </a>
 

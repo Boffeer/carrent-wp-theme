@@ -27,16 +27,16 @@ use Carbon_Fields\Field;
 	Homepage
  */
 $homepage_id  = get_option('page_on_front');
-Container::make('post_meta', 'homepage_info', 'Настройки страницы')
+//Container::make('post_meta', 'homepage_info', 'Настройки страницы')
 //	->where('post_id', '=', $homepage_id)
-->where('post_type', '=', 'page')
-->add_fields(array(
+//->where('post_type', '=', 'page')
+//->add_fields(array(
 //    Field::make('textarea', 'page_description', 'Описание для соцсетей'),
 
-    Field::make( 'radio', 'header_overlap', __( 'Будет ли заезжать шапка на первый экран?' ) )
-        ->set_width(50)
-        ->set_options( array(
-            'false' => 'Нет',
-            'true' => 'Шапка заезжает на первый экран',
-        ) ),
-));
+//    Field::make( 'radio', 'header_overlap', __( 'Будет ли заезжать шапка на первый экран?' ) )
+//        ->set_width(50)
+//        ->set_options( array(
+//            'false' => 'Нет',
+//            'true' => 'Шапка заезжает на первый экран',
+//        ) ),
+//));
