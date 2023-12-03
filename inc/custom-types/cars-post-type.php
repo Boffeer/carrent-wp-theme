@@ -335,3 +335,64 @@ function get_car_bookings_timestamps($id) {
 
     return json_encode($active_bookings);
 }
+
+function get_car_stats($id) {
+    setup_postdata($id);
+
+    $stats = array(
+        'number_seats' => carbon_get_the_post_meta('number_seats'),
+        'trunk_volume' => carbon_get_the_post_meta('trunk_volume'),
+        'transmission' => carbon_get_the_post_meta('transmission'),
+        'year' => carbon_get_the_post_meta('year'),
+        'color' => carbon_get_the_post_meta('color'),
+        'engine_capacity' => carbon_get_the_post_meta('engine_capacity'),
+        'car_class' => carbon_get_the_post_meta('car_class'),
+        'car_type' => carbon_get_the_post_meta('car_type'),
+        'number_doors' => carbon_get_the_post_meta('number_doors'),
+        'tank_value' => carbon_get_the_post_meta('tank_value'),
+        'drive_unit' => carbon_get_the_post_meta('drive_unit'),
+        'engine_power' => carbon_get_the_post_meta('engine_power'),
+        'airbags' => carbon_get_the_post_meta('airbags'),
+        'roof' => carbon_get_the_post_meta('roof'),
+        'gas_mileage' => carbon_get_the_post_meta('gas_mileage'),
+        'steering_side' => carbon_get_the_post_meta('steering_side'),
+        'interior' => carbon_get_the_post_meta('interior'),
+        'window_lifters' => carbon_get_the_post_meta('window_lifters'),
+    );
+
+    wp_reset_postdata();
+
+    return $stats;
+}
+function get_car_options($id)
+{
+    setup_postdata($id);
+
+    $options = array(
+        'is_air' => carbon_get_the_post_meta('is_air'),
+        'is_electropackage' => carbon_get_the_post_meta('is_electropackage'),
+        'abs' => carbon_get_the_post_meta('abs'),
+        'ebd' => carbon_get_the_post_meta('ebd'),
+        'esp' => carbon_get_the_post_meta('esp'),
+        'heated_seats' => carbon_get_the_post_meta('heated_seats'),
+        'heated_seats_front' => carbon_get_the_post_meta('heated_seats_front'),
+        'parktronic' => carbon_get_the_post_meta('parktronic'),
+        'parktronic_back' => carbon_get_the_post_meta('parktronic_back'),
+        'parktronic_camera' => carbon_get_the_post_meta('parktronic_camera'),
+        'wheel_adjustment' => carbon_get_the_post_meta('wheel_adjustment'),
+        'wheel_adjustment_full' => carbon_get_the_post_meta('wheel_adjustment_full'),
+        'audio_system' => carbon_get_the_post_meta('audio_system'),
+        'video_system' => carbon_get_the_post_meta('video_system'),
+        'tv_system' => carbon_get_the_post_meta('tv_system'),
+        'cd_system' => carbon_get_the_post_meta('cd_system'),
+        'usb_system' => carbon_get_the_post_meta('usb_system'),
+        'climate_control' => carbon_get_the_post_meta('climate_control'),
+        'folding_seats' => carbon_get_the_post_meta('folding_seats'),
+        'heated_windshield' => carbon_get_the_post_meta('heated_windshield'),
+        'rain_sensor' => carbon_get_the_post_meta('rain_sensor'),
+    );
+
+    wp_reset_postdata();
+
+    return $options;
+}

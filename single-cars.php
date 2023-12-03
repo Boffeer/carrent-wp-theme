@@ -15,11 +15,15 @@
 get_header();
 ?>
 
+<?php
+$title = carbon_get_the_post_meta('car_name');
+?>
+
 <div class="breadcrumbs">
     <div class="breadcrumbs__container container">
         <ul class="breadcrumbs__list">
             <li class="breadcrumbs__item"><a href="/" class="breadcrumbs__link">Главная</a></li>
-            <li class="breadcrumbs__item"><?php the_title(); ?></li>
+            <li class="breadcrumbs__item"><?php echo $title; ?></li>
         </ul>
     </div>
 </div>
@@ -40,7 +44,7 @@ get_header();
                             <?php foreach ($photos as $photo_id) : ?>
                             <div class="swiper-slide product-hero__gallery-slide">
                                 <picture class="product-hero__pic">
-                                    <img src="<?php echo get_image_url_by_id($photo_id); ?>" alt="<?php the_title(); ?>" class="product-hero__img">
+                                    <img src="<?php echo get_image_url_by_id($photo_id); ?>" alt="<?php echo $title; ?>" class="product-hero__img">
                                 </picture>
                             </div>
                             <?php endforeach; ?>
@@ -54,7 +58,7 @@ get_header();
                             <?php foreach ($photos as $photo_id) : ?>
                             <div class="swiper-slide product-hero__thumbs-slide">
                                 <picture class="product-hero__pic">
-                                    <img src="<?php echo get_image_url_by_id($photo_id); ?>" alt="<?php the_title(); ?>" class="product-hero__img">
+                                    <img src="<?php echo get_image_url_by_id($photo_id); ?>" alt="<?php echo $title; ?>" class="product-hero__img">
                                 </picture>
                             </div>
                             <?php endforeach; ?>
@@ -63,7 +67,7 @@ get_header();
                     <div class="swiper-button-next product-hero__thumbs-button-next"></div>
                 </div>
             </div>
-            <h1 class="product-hero__title"><?php the_title(); ?></h1>
+            <h1 class="product-hero__title"><?php echo $title; ?></h1>
         </div>
         <div class="product-hero__info">
             <h3 class="product-hero__info-title">Выберите свободную дату</h3>
@@ -202,46 +206,31 @@ get_header();
                 </div>
             </div>
         </div>
+        <?php $stats = get_car_stats(get_the_ID()); ?>
         <div class="product-hero__content">
             <div class="product-hero__stat-list">
-                <p class="product-hero__stat">
-                    <span class="product-hero__stat-title">Класс:</span>
-                    <span class="product-hero__stat-value">5751941</span>
-                </p>
-                <p class="product-hero__stat">
-                    <span class="product-hero__stat-title">Объем багажа:</span>
-                    <span class="product-hero__stat-value">5751941</span>
-                </p>
-                <p class="product-hero__stat">
-                    <span class="product-hero__stat-title">Цвет:</span>
-                    <span class="product-hero__stat-value">4.7</span>
-                </p>
-                <p class="product-hero__stat">
-                    <span class="product-hero__stat-title">Трансмиссия:</span>
-                    <span class="product-hero__stat-value">4.7</span>
-                </p>
-                <p class="product-hero__stat">
-                    <span class="product-hero__stat-title">Пробег:</span>
-                    <span class="product-hero__stat-value">1334x750</span>
-                </p>
-                <p class="product-hero__stat">
-                    <span class="product-hero__stat-title">Вместимость:</span>
-                    <span class="product-hero__stat-value">1334x750</span>
-                </p>
-                <p class="product-hero__stat">
-                    <span class="product-hero__stat-title">Тип кузова:</span>
-                    <span class="product-hero__stat-value">64</span>
-                </p>
-                <p class="product-hero__stat">
-                    <span class="product-hero__stat-title">Количество дверей:</span>
-                    <span class="product-hero__stat-value">64</span>
-                </p>
+                <?php foreach ($stats as $stat_name => $stat) : ?>
+                <?php if (empty($stat)) continue?>
+                    <p class="product-hero__stat">
+                        <span class="product-hero__stat-title"><?php echo $stat_name; ?></span>
+                        <span class="product-hero__stat-value"><?php echo $stat; ?></span>
+                    </p>
+                <?php endforeach; ?>
             </div>
             <div class="product-hero__options">
                 <h3 class="product-hero__options-title">Опции</h3>
-                <div class="product-hero__options-content wysiwyg">
-                    <p>Кондиционер, Система входа с бесконтактным ключом, Задние датчики парковки, Датчики парковки, Технология мобильного телефона, Bluetooth, USB, Аудио/iPod, Android Auto, Адаптивные фары</p>
-                </div>
+                    <div class="product-hero__options-content wysiwyg">
+                        <p>
+                            <?php
+                            $options = get_car_options(get_the_ID());
+                            $option_names = array_keys($options);
+                            ?>
+                            <?php foreach ($option_names as $index => $option_name) : ?>
+                                <?php if ($options[$option_name] === 'false') continue; ?>
+                                <?php echo $option_name; echo ($index < count($option_names) - 1) ? ',' : ''; ?>
+                            <?php endforeach; ?>
+                        </p>
+                    </div>
             </div>
         </div>
     </div>
