@@ -50,7 +50,16 @@ function get_stripe_paylink()
     $booking_id = uniqid();
 
     $domain = $_SERVER['SERVER_NAME'];
-    $stripe_secret_key = carbon_get_theme_option('stripe_secret_key');
+
+    $key_type = carbon_get_theme_option('stripe_key_type');
+    if ($key_type === 'prod') {
+        $key_type = '';
+    } else {
+        $key_type.= '_';
+    }
+
+
+    $stripe_secret_key = carbon_get_theme_option($key_type.'stripe_secret_key');
     $stripe_api_url = 'https://api.stripe.com/v1/checkout/sessions';
 
     // Set your Stripe secret key
@@ -380,6 +389,7 @@ function crrt_register_translate() {
     pll_register_string('Agree', 'Agree', 'crrt', false);
     pll_register_string('And', 'and', 'crrt', false);
     pll_register_string('Options', 'Options', 'crrt', false);
+    pll_register_string('Languages', 'Languages', 'crrt', false);
 
     pll_register_string('NumberSeats', 'number_seats', 'crrt', false);
     pll_register_string('Transmission', 'transmission', 'crrt', false);

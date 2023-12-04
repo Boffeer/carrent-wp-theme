@@ -330,6 +330,14 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                             </a>
                         <?php endforeach; ?>
 
+                        <?php if (!empty($phones)) : ?>
+                            <a href="<?php echo phone_to_href($phones[0]); ?>" class="socials__link">
+                                <svg class="socials__icon">
+                                    <use xlink:href="<?php echo THEME_STATIC; ?>/img/faq.crrt/tel.svg#tel" />
+                                </svg>
+                            </a>
+                        <?php endif; ?>
+
                         <?php $email = explode_textarea(THEME_OPTIONS['emails'])[0]; ?>
                         <?php if (!empty($email)) : ?>
                             <a href="mailto:<?php echo $email; ?>" class="socials__link">

@@ -15,23 +15,38 @@ Container::make('theme_options', 'theme_settings',  'Theme settings')
 //            ->set_width(30),
         Field::make('image', 'default_og_img', 'Default socials image')
             ->set_width(20),
-        Field::make('text', 'rentprog_api', 'rentprog.ru api key')
-            ->set_width(50),
         Field::make('text', 'currency', 'Currency'),
-        Field::make('text', 'stripe_public_key', 'Stripe Public Key')
-            ->set_width(50),
-        Field::make('text', 'stripe_secret_key', 'Stripe Secret Key')
-            ->set_width(50),
         Field::make('text', 'min_hour_booking_gap', 'Minimum Hour Gap Between Bookings'),
+        Field::make('text', 'time_min', 'Earliest booking time'),
+        Field::make('text', 'time_max', 'Latest booking time'),
 
 		Field::make('header_scripts', 'crb_header_script', 'Header Script'),
 		Field::make('footer_scripts', 'crb_footer_script', 'Footer Script'),
 	))
+    ->add_tab('Integrations', array(
+        Field::make('text', 'rentprog_api', 'rentprog.ru api key')
+            ->set_width(50),
+        Field::make( 'radio', 'stripe_key_type', __( 'Which Stripe keys to use?' ) )
+            ->set_options( array(
+                'prod' => 'Real cards',
+                'test' => 'Test',
+            ) ),
+        Field::make('text', 'stripe_public_key', 'Stripe Public Key')
+            ->set_width(50),
+        Field::make('text', 'stripe_secret_key', 'Stripe Secret Key')
+            ->set_width(50),
+        Field::make('text', 'test_stripe_public_key', 'Test Stripe Public Key')
+            ->set_width(50),
+        Field::make('text', 'test_stripe_secret_key', 'Test Stripe Secret Key')
+            ->set_width(50),
+    ))
 
 	->add_tab('Contacts', array(
 		Field::make('textarea', 'phones', 'Phones')
             ->set_help_text('Every phone must be on new line')
 			->set_width(50),
+        Field::make('text', 'phone_country_code', 'Phone country code')
+            ->set_width(50),
         Field::make('textarea', 'emails', 'Email')
             ->set_width(50),
         Field::make('textarea', 'socials', 'Socials')
