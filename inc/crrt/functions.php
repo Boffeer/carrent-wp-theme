@@ -418,4 +418,6 @@ function crrt_register_translate() {
 
     pll_register_string('SuccessMessage', 'Success message', 'crrt', false);
     pll_register_string('ExploreMore', 'Explore More', 'crrt', false);
+
+    pll_register_string('CarsEmpty', 'Cars empty', 'crrt', false);
 }

@@ -240,7 +240,6 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                                 <?php get_template_part('template-parts/content', 'reviews'); ?>
                             </div>
                         <?php endwhile; wp_reset_postdata(); ?>
-                        ?>
                     </div>
                 </div>
                 <div class="swiper-scrollbar reviews-carousel__scrollbar"></div>

@@ -277,7 +277,7 @@ function filter_cars() {
         'search_start' => $search_start,
         'search_end' => $search_end,
         'messages' => array(
-            'empty' => 'Все машины заняты, выберите другие даты или время',
+            'empty' => pll__('Cars empty', 'crrt'),
         ),
     ), JSON_UNESCAPED_UNICODE);
     wp_die();
