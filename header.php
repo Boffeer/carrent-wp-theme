@@ -39,26 +39,20 @@
             <div class="header__menu menu">
                 <nav class="menu__nav">
                     <ul class="menu__nav-links">
-                        <li class="menu__nav-item active">
-                            <a href="#" class="menu__nav-link">Главная</a>
-                        </li>
-                        <li class="menu__nav-item menu__nav-item--has-children">
-                            <a href="#cars" class="menu__nav-link">Автопарк</a>
-                            <div class="menu__nav-dropdown">
-                                <a href="#" class="menu__nav-link menu__nav-dropdown-link">Купе</a>
-                                <a href="#" class="menu__nav-link menu__nav-dropdown-link">Сенданы</a>
-                                <a href="#" class="menu__nav-link menu__nav-dropdown-link">Маслкары</a>
-                            </div>
-                        </li>
-                        <li class="menu__nav-item">
-                            <a href="#reviews" class="menu__nav-link">Отзывы</a>
-                        </li>
-                        <li class="menu__nav-item">
-                            <a href="#blog" class="menu__nav-link">Блог</a>
-                        </li>
-                        <li class="menu__nav-item">
-                            <a href="#faq" class="menu__nav-link">Вопрос-ответ</a>
-                        </li>
+                        <?php $header_menu = get_menu_location('nav-burger'); ?>
+                        <?php foreach ($header_menu as $menu) : ?>
+                            <?php
+                                $has_children = $menu['href'] === '#cars';
+                            ?>
+                            <li class="menu__nav-item <?php echo $has_children ? 'menu__nav-item--has-children' : ''; ?>">
+                                <a href="<?php echo $menu['href']; ?>" class="menu__nav-link"><?php pll_e($menu['title'], 'crrt'); ?></a>
+                                <div class="menu__nav-dropdown">
+                                    <a href="#" class="menu__nav-link menu__nav-dropdown-link">Купе</a>
+                                    <a href="#" class="menu__nav-link menu__nav-dropdown-link">Сенданы</a>
+                                    <a href="#" class="menu__nav-link menu__nav-dropdown-link">Маслкары</a>
+                                </div>
+                            </li>
+                        <?php endforeach; ?>
                     </ul>
                 </nav>
             </div>
@@ -69,7 +63,7 @@
                         <use xlink:href="<?php echo THEME_STATIC; ?>/img/common.crrt/icon-phone.svg#icon-phone" />
                     </svg>
                     <span class="header__contacts-content">
-                      <span class="header__contacts-label">Общие вопросы:</span>
+                      <span class="header__contacts-label"><?php pll_e('Call us', 'crrt'); ?></span>
                       <span class="header__contacts-text"><?php echo $phone; ?></span>
                     </span>
                 </a>

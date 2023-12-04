@@ -70,7 +70,7 @@
 
         <div class="footer__contact">
             <a href="<?php echo phone_to_href($phone) ?>" class="footer__phone">
-                <span class="footer__phone-caption">Связаться с нами:</span>
+                <span class="footer__phone-caption"><?php pll_e('Call us');?></span>
                 <span class="footer__phone-text"><?php echo $phone; ?></span>
                 <span class="footer__phone-caption"><?php echo $work_time; ?></span>
             </a>

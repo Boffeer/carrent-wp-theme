@@ -46,16 +46,16 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                             value="<?php echo pll_current_language(); ?>"
                     >
                     <div class="select hero__bookform-select">
-                        <select class="select__input"
+                        <select class="select__input js_form__control"
                                 name="location_start"
                                 tabindex="-1"
                                 required>
-                            <option value="" disabled selected>Pick-up location</option>
+                            <option value="" disabled selected><?php pll_e('A pickup location', 'crrt'); ?></option>
                             <?php foreach ($locations_from as $location) : ?>
                                 <option value="<?php echo $location; ?>"><?php echo $location; ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <button class="select__toggle" type="button">Pick-up location</button>
+                        <button class="select__toggle" type="button"><?php pll_e('A pickup location', 'crrt'); ?></button>
                         <ul class="select__list">
                             <?php foreach ($locations_from as $location) : ?>
                                 <li>
@@ -65,12 +65,10 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                         </ul>
                     </div>
                     <div class="select hero__bookform-select">
-                        <!-- <div class="select__label">Откуда вы узнали о нас?</div> -->
-                        <select class="select__input"
+                        <select class="select__input js_form__control"
                                 name="location_end"
                                 tabindex="-1"
                                 required>
-                            <!-- <option value="" disabled selected>Выберите место получения</option> -->
                             <option value="" disabled selected>Drop-off location</option>
                             <?php foreach ($locations_to as $location) : ?>
                                 <option value="<?php echo $location; ?>"><?php echo $location; ?></option>
@@ -85,13 +83,12 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                             <?php endforeach; ?>
                         </ul>
                     </div>
-                    <div class="hero__bookform-range b_rangepicker" data-lang="ru">
-                        <label class="input b_datepicker js_form__control" data-lang="ru">
-<!--                            <span class="b_datepicker__display">Start date</span>-->
+                    <div class="hero__bookform-range b_rangepicker" data-lang="<?php echo pll_current_language(); ?>">
+                        <label class="input b_datepicker js_form__control" data-lang="<?php echo pll_current_language(); ?>">
                             <input
                                     class="input__field"
                                     type="text"
-                                    placeholder="Dates"
+                                    placeholder="<?php echo pll_e('Rent Dates', 'crrt'); ?>"
                                     readonly
                                     required
                             >
@@ -119,7 +116,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                         </div>
                         <input class="timepicker__value" type="text" name="time_end" inputmode="numeric" value="14:10">
                     </div>
-                    <button class="button-primary hero__bookform-submit js_form__submit">Подобрать автомобиль</button>
+                    <button class="button-primary hero__bookform-submit js_form__submit"><?php pll_e('Find a Car', 'crrt'); ?></button>
                 </div>
             </div>
 
@@ -169,8 +166,8 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                         </picture>
                     </div>
                     <div class="bullet-card__content wysiwyg">
-                        <h3><?php echo $bullet['title']; ?></h3>
-                        <p><?php echo $bullet['text']; ?></p>
+                        <h3><?php echo typograph($bullet['title']); ?></h3>
+                        <p><?php echo typograph($bullet['text']); ?></p>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -193,7 +190,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
     <section class="shelf section" id="cars">
         <div class="shelf__container container">
             <h2 class="section-title shelf__title">
-                Выберите свой <br>автомобиль
+                <?php pll_e('Choose Your Car', 'crrt')?>
             </h2>
             <div class="shelf__content">
                 <?php while ($cars->have_posts()) : $cars->the_post(); ?>
@@ -201,7 +198,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                 <?php endwhile; wp_reset_query(); ?>
             </div>
             <div class="shelf__buttons is-hidden">
-                <button class="button-secondary shelf__button-more">Показать еще машины</button>
+                <button class="button-secondary shelf__button-more"><?php pll_e('Show more', 'crrt'); ?></button>
             </div>
         </div>
     </section>
@@ -212,7 +209,9 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
 <?php if (!empty($reviews_ids)) : ?>
     <section class="section reviews">
         <div class="container reviews__container">
-            <h2 class="section-title section-text--center reviews__title">Отзывы</h2>
+            <h2 class="section-title section-text--center reviews__title">
+                <?php pll_e('Reviews', 'crrt'); ?>
+            </h2>
             <div class="reviews-carousel">
                 <div class="swiper reviews-carousel__swiper">
                     <div class="swiper-wrapper">
@@ -251,12 +250,13 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
         'orderby'        => 'date',
         'order'          => 'DESC',
         'post_status'    => 'publish',
+        'lang' =>  pll_current_language(),
     );
     $news = new WP_Query($news_args);
     ?>
     <?php if ($news->have_posts()) : ?>
     <section class="section blog" id="blog">
-    <h1 class="page-title section-title">Блог</h1>
+        <h2 class="section-title blog__title"> <?php pll_e('Blog', 'crrt'); ?></h2>
         <div class="container blog__container">
             <div class="blog__masonry">
                 <?php while ($news->have_posts()) : $news->the_post(); ?>
@@ -280,7 +280,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
     <?php if (!empty($faq_ids)) : ?>
     <section class="section faq" id="faq">
         <div class="container faq__container">
-            <h2 class="section-title faq__title" data-aos="fade-up">Часто задаваемые <br> вопросы</h2>
+            <h2 class="section-title faq__title" data-aos="fade-up"> <?php pll_e('FAQ', 'crrt'); ?></h2>
             <div class="faq__content">
                 <div class="faq__list">
                     <?php
@@ -288,6 +288,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                         'post_type' => 'faq',
                         'post__in' => $faq_ids,
                         'post_status' => 'publish',
+//                        'orderby'        => 'post__in',
                     ));
 
                     while ($faq_query->have_posts()) : $faq_query->the_post();

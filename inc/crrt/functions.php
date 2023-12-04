@@ -343,3 +343,23 @@ function create_payment($booking_id, $amount) {
 
     wp_die();
 }
+
+add_action('after_setup_theme', 'crrt_register_translate');
+function crrt_register_translate() {
+    if (!function_exists('pll_register_string')) return;
+
+    pll_register_string('Blog', 'Blog', 'crrt', false);
+    pll_register_string('CallUs', 'Call us', 'crrt', false);
+    pll_register_string('PickupLocation', 'A pickup location', 'crrt', false);
+    pll_register_string('FlightNumber', 'Flight number', 'crrt', false);
+    pll_register_string('RentDates', 'Rent Dates', 'crrt', false);
+    pll_register_string('ChooseYourCar', 'Choose Your Car', 'crrt', false);
+    pll_register_string('RentCaption', 'Rent Caption', 'crrt', false);
+    pll_register_string('SelectCar', 'Select a Car', 'crrt', false);
+    pll_register_string('Reviews', 'Reviews', 'crrt', false);
+    pll_register_string('Read More', 'Read More', 'crrt', false);
+    pll_register_string('FAQ', 'FAQ', 'crrt', false);
+    pll_register_string('ShowMore', 'Show more', 'crrt', false);
+    pll_register_string('MoreNews', 'More news', 'crrt', false);
+    pll_register_string('FindCar', 'Find a Car', 'crrt', false);
+}
