@@ -264,7 +264,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                 <?php endwhile; wp_reset_postdata(); ?>
             </div>
             <div class="section__buttons">
-                <a href="<?php echo get_post_type_archive_link('news'); ?>" class="button-secondary shelf__button-more">Смотреть все новости</a>
+                <a href="<?php echo get_post_type_archive_link('news'); ?>" class="button-secondary shelf__button-more"><?php pll_e('More news', 'crrt'); ?></a>
             </div>
         </div>
     </section>

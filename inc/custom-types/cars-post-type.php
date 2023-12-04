@@ -224,8 +224,8 @@ function get_car_content($id) {
         'trunk_volume' => carbon_get_post_meta($id, 'trunk_volume'),
         'transmission' => carbon_get_post_meta($id, 'transmission'),
         'currency' => carbon_get_theme_option('currency'),
-        'text_price_hint' => '*При аренде от 30 до 45 дней',
-        'text_book' => 'Забронировать машину',
+        'text_price_hint' => pll__('Rent Caption', 'crrt'),
+        'text_book' => pll__('Select a Car', 'crrt'),
     );
     return $car;
 }

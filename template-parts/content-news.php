@@ -20,7 +20,7 @@
     </div>
     <div class="blog-card__buttons">
         <a href="<?php the_permalink(); ?>" class="blog-card__more">
-            <span class="blog-card__more-text">Подробнее</span>
+            <span class="blog-card__more-text"><?php pll_e('Read More', 'crrt')?></span>
             <svg class="blog-card__more-icon">
                 <use href="<?php echo THEME_STATIC; ?>/img/common.b/link-angle.svg#angle" />
             </svg>

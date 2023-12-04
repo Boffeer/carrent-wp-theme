@@ -23,7 +23,7 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
     <div class="breadcrumbs">
     <div class="breadcrumbs__container container">
         <ul class="breadcrumbs__list">
-            <li class="breadcrumbs__item"><a href="/" class="breadcrumbs__link">Главная</a></li>
+            <li class="breadcrumbs__item"><a href="/" class="breadcrumbs__link"><?php pll_e('Homepage', 'crrt'); ?></a></li>
             <li class="breadcrumbs__item"><?php echo $title; ?></li>
         </ul>
     </div>
@@ -71,20 +71,21 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
             <h1 class="product-hero__title"><?php echo $title; ?></h1>
         </div>
         <div class="product-hero__info">
-            <h3 class="product-hero__info-title">Выберите свободную дату</h3>
+            <h3 class="product-hero__info-title"><?php pll_e('Free Dates'); ?></h3>
             <div class="product-hero__bookform js_form js_form--no-lock-button js_form--no-reset"
                  data-route="<?php echo FORM_URLS['ajax']?>"
                  data-action="get_stripe_paylink"
             >
                 <input class="is-hidden" hidden name="post_id" type="text" value="<?php the_id(); ?>">
                 <?php
-                    $date_start = $_GET['date_start'];
-                    $date_end = $_GET['date_end'];
+                    $date_start = isset($_GET['date_start']) ? esc_html($_GET['date_start']) : '';
+                    $date_end = isset($_GET['date_end']) ? esc_html($_GET['date_end']) : '';
                 ?>
                 <div class="product-hero__calendar b_rangepicker b_rangepicker--inline"
                      data-disabled="<?php echo $disabled_dates; ?>"
                      data-hour-gap="<?php echo carbon_get_theme_option('min_hour_booking_gap'); ?>"
                      data-default-date="<?php echo $date_start.','.$date_end; ?>"
+                     data-lang="<?php echo pll_current_language(); ?>"
                 >
                     <input class="input__field" type="text">
                     <input class="is-hidden" name="date_start" type="text">
@@ -123,12 +124,12 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                                 name="location_start"
                                 tabindex="-1"
                                 required>
-                            <option value="" disabled selected>Pick-up location</option>
+                            <option value="" disabled selected><?php pll_e('A pickup location', 'crrt');?></option>
                             <?php foreach ($locations_from as $location) : ?>
                                 <option value="<?php echo $location; ?>"><?php echo $location; ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <button class="select__toggle" type="button">Pick-up location</button>
+                        <button class="select__toggle" type="button"><?php pll_e('A pickup location', 'crrt');?></button>
                         <ul class="select__list">
                             <?php foreach ($locations_from as $location) : ?>
                                 <li>
@@ -138,18 +139,16 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                         </ul>
                     </div>
                     <div class="select hero__bookform-select">
-                        <!-- <div class="select__label">Откуда вы узнали о нас?</div> -->
                         <select class="select__input"
                                 name="location_end"
                                 tabindex="-1"
                                 required>
-                            <!-- <option value="" disabled selected>Выберите место получения</option> -->
-                            <option value="" disabled selected>Drop-off location</option>
+                            <option value="" disabled selected><?php pll_e('Flight number','crrt'); ?></option>
                             <?php foreach ($locations_to as $location) : ?>
                                 <option value="<?php echo $location; ?>"><?php echo $location; ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <button class="select__toggle" type="button">Drop-off location</button>
+                        <button class="select__toggle" type="button"><?php pll_e('Flight number','crrt'); ?></button>
                         <ul class="select__list">
                             <?php foreach ($locations_to as $location) : ?>
                                 <li>
@@ -164,7 +163,7 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                                 class="input__field"
                                 name="user_phone"
                                 type="tel"
-                                placeholder="Phone"
+                                placeholder="<?php pll_e('Phone', 'crrt'); ?>"
                                 required
                         >
                     </label>
@@ -173,13 +172,13 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                                 class="input__field"
                                 name="user_email"
                                 type="email"
-                                placeholder="Email"
+                                placeholder="<?php pll_e('Email', 'crrt'); ?>"
                                 required
                         >
                     </label>
                 </div>
                 <div class="product-hero__bookform-tariffs">
-                    <h3 class="product-hero__bookform-tariffs-title">Тарифы</h3>
+                    <h3 class="product-hero__bookform-tariffs-title"><?php pll_e('Rates', 'crrt'); ?></h3>
 
                     <?php
                         $prices = [];
@@ -194,18 +193,21 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                             <span class="currency"><?php echo THEME_OPTIONS['currency']; ?></span>
                         </div>
                         <div class="product-hero__bookform-tariff-caption">
-                            <?php echo $tariff_names[$key]; ?>
+                            <?php echo typograph($tariff_names[$key]); ?>
                         </div>
                     </div>
                     <?php endforeach; ?>
 
-                    <button class="button-primary product-hero__bookform-submit js_form__submit">Подобрать автомобиль</button>
+                    <button class="button-primary product-hero__bookform-submit js_form__submit"><?php pll_e('Book a car', 'crrt'); ?></button>
                     <p class="product-hero__bookform-caption">
                         <?php
                             $link_privacy = get_carbon_association_ids(carbon_get_post_meta($homepage_id, 'link_privacy'));
                             $link_offer = get_carbon_association_ids(carbon_get_post_meta($homepage_id, 'link_offer'));
                         ?>
-                        оплачивая, я соглашусь и принимаю
+<!--                        оплачивая, я соглашусь и принимаю-->
+                        <?php if (isset($link_privacy[0])) : ?>
+                        <?php pll_e('Agree', 'crrt'); ?>
+                        <?php endif ;?>
 
                         <?php if (isset($link_privacy[0])) : ?>
                             <a class="link" href="<?php the_permalink($link_privacy[0]); ?>">
@@ -213,7 +215,7 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                             </a>
                         <?php endif; ?>
                         <?php if (isset($link_privacy[0])) : ?>
-                            и
+                            <?php pll_e('and', 'crrt'); ?>
                         <?php endif; ?>
                         <?php if (isset($link_offer[0])) : ?>
                             <a class="link" href="<?php the_permalink($link_offer[0]); ?>">
@@ -230,13 +232,13 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                 <?php foreach ($stats as $stat_name => $stat) : ?>
                 <?php if (empty($stat)) continue?>
                     <p class="product-hero__stat">
-                        <span class="product-hero__stat-title"><?php echo $stat_name; ?></span>
+                        <span class="product-hero__stat-title"><?php echo pll_e($stat_name, 'crrt'); ?></span>
                         <span class="product-hero__stat-value"><?php echo $stat; ?></span>
                     </p>
                 <?php endforeach; ?>
             </div>
             <div class="product-hero__options">
-                <h3 class="product-hero__options-title">Опции</h3>
+                <h3 class="product-hero__options-title"><?php pll_e('Options', 'crrt'); ?></h3>
                     <div class="product-hero__options-content wysiwyg">
                         <p>
                             <?php
@@ -245,7 +247,7 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                             ?>
                             <?php foreach ($option_names as $index => $option_name) : ?>
                                 <?php if ($options[$option_name] === 'false') continue; ?>
-                                <?php echo $option_name; echo ($index < count($option_names) - 1) ? ',' : ''; ?>
+                                <?php pll_e($option_name, 'crrt'); echo ($index < count($option_names) - 1) ? ',' : ''; ?>
                             <?php endforeach; ?>
                         </p>
                     </div>

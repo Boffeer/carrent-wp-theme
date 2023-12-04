@@ -15,6 +15,9 @@ function get_stripe_paylink()
     $time_start = $_POST['time_start'];
     $time_end = $_POST['time_end'];
 
+    $date_start = $date_start . ' ' . $time_start;
+    $date_end = $date_end . ' ' . $time_end;
+
     $user_phone = $_POST['user_phone'];
     $user_email = $_POST['user_email'];
 
@@ -362,4 +365,43 @@ function crrt_register_translate() {
     pll_register_string('ShowMore', 'Show more', 'crrt', false);
     pll_register_string('MoreNews', 'More news', 'crrt', false);
     pll_register_string('FindCar', 'Find a Car', 'crrt', false);
+    pll_register_string('Fleet', 'Fleet', 'crrt', false);
+    pll_register_string('Homepage', 'Homepage', 'crrt', false);
+    pll_register_string('FreeDates', 'Free Dates', 'crrt', false);
+    pll_register_string('Rates', 'Rates', 'crrt', false);
+    pll_register_string('BookCar', 'Book a car', 'crrt', false);
+    pll_register_string('Phone', 'Phone', 'crrt', false);
+    pll_register_string('Email', 'Email', 'crrt', false);
+    pll_register_string('Agree', 'Agree', 'crrt', false);
+    pll_register_string('And', 'and', 'crrt', false);
+    pll_register_string('Options', 'Options', 'crrt', false);
+
+    pll_register_string('NumberSeats', 'number_seats', 'crrt', false);
+    pll_register_string('Transmission', 'transmission', 'crrt', false);
+    pll_register_string('Color', 'color', 'crrt', false);
+    pll_register_string('CarClass', 'car_class', 'crrt', false);
+    pll_register_string('NumberDoors', 'number_doors', 'crrt', false);
+    pll_register_string('DriveUnit', 'drive_unit', 'crrt', false);
+    pll_register_string('Airbags', 'airbags', 'crrt', false);
+    pll_register_string('GasMileage', 'gas_mileage', 'crrt', false);
+    pll_register_string('Interior', 'interior', 'crrt', false);
+    pll_register_string('TrunkVolume', 'trunk_volume', 'crrt', false);
+    pll_register_string('Year', 'year', 'crrt', false);
+    pll_register_string('EngineCapacity', 'engine_capacity', 'crrt', false);
+    pll_register_string('CarType', 'car_type', 'crrt', false);
+    pll_register_string('TankValue', 'tank_value', 'crrt', false);
+    pll_register_string('EnginePower', 'engine_power', 'crrt', false);
+    pll_register_string('Roof', 'roof', 'crrt', false);
+    pll_register_string('SteeringSide', 'steering_side', 'crrt', false);
+    pll_register_string('WindowLifters', 'window_lifters', 'crrt', false);
+
+    pll_register_string('IsAir', 'is_air', 'crrt', false);
+    pll_register_string('IsElectropackage', 'is_electropackage', 'crrt', false);
+    pll_register_string('HeatedSeatsFront', 'heated_seats_front', 'crrt', false);
+    pll_register_string('Parktronic', 'parktronic', 'crrt', false);
+    pll_register_string('AudioSystem', 'audio_system', 'crrt', false);
+    pll_register_string('TvSystem', 'tv_system', 'crrt', false);
+    pll_register_string('UsbSystem', 'usb_system', 'crrt', false);
+    pll_register_string('ClimateControl', 'climate_control', 'crrt', false);
+    pll_register_string('RainSensor', 'rain_sensor', 'crrt', false);
 }
