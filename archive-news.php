@@ -16,7 +16,7 @@
 <?php get_header(); ?>
 
     <section class="section blog" id="blog">
-        <h1 class="page-title section-title">Блог</h1>
+        <h1 class="page-title section-title"><?php pll_e('Blog', 'crrt'); ?></h1>
         <div class="container blog__container">
             <div class="blog__masonry">
                 <?php

@@ -18,7 +18,7 @@ get_header();
     <div class="breadcrumbs">
         <div class="breadcrumbs__container container">
             <ul class="breadcrumbs__list">
-                <li class="breadcrumbs__item"><a href="/" class="breadcrumbs__link">Главная</a></li>
+                <li class="breadcrumbs__item"><a href="/" class="breadcrumbs__link"><?php pll_e('Homepage'); ?></a></li>
                 <li class="breadcrumbs__item"><?php the_title(); ?></li>
             </ul>
         </div>

@@ -71,6 +71,7 @@ function register_car_booking_fields() {
                 ->set_width(50),
             Field::make('text', 'location_end', 'location_end')
                 ->set_width(50),
+            Field::make('text', 'flight_number', 'flight_number'),
         ))
 		;
 }

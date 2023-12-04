@@ -24,6 +24,8 @@ function get_stripe_paylink()
     $location_start = $_POST['location_start'];
     $location_end = $_POST['location_end'];
 
+    $flight_number = $_POST['flight_number'];
+
     $car = array(
         'crm_id' => carbon_get_post_meta($post_id, 'rentprog_id'),
         'name' => carbon_get_post_meta($post_id, 'car_name'),
@@ -84,6 +86,7 @@ function get_stripe_paylink()
                 'time_end' => $time_end,
                 'location_start' => $location_start,
                 'location_end' => $location_end,
+                'flight_number' => $flight_number,
             ],
         ],
         'customer_email' => $user_email,
@@ -177,6 +180,7 @@ function handle_stripe_webhook() {
         $location_start = $event_json->data->object->metadata->location_start;
         $location_end = $event_json->data->object->metadata->location_end;
         $booking_id = $event_json->data->object->metadata->booking_id;
+        $flight_number = $event_json->data->object->metadata->flight_number;
 
 
         $payment_intent = $event_json->data->object->payment_intent;
@@ -221,6 +225,7 @@ function handle_stripe_webhook() {
         carbon_set_post_meta( $post_id, 'time_end', $time_end);
         carbon_set_post_meta( $post_id, 'location_start', $location_start);
         carbon_set_post_meta( $post_id, 'location_end', $location_end);
+        carbon_set_post_meta( $post_id, 'flight_number', $flight_number);
 
         $booking = create_booking($post_id);
 
@@ -404,4 +409,13 @@ function crrt_register_translate() {
     pll_register_string('UsbSystem', 'usb_system', 'crrt', false);
     pll_register_string('ClimateControl', 'climate_control', 'crrt', false);
     pll_register_string('RainSensor', 'rain_sensor', 'crrt', false);
+
+    pll_register_string('Fleet', 'Fleet', 'crrt', false);
+    pll_register_string('OrderNumber', 'Order number', 'crrt', false);
+    pll_register_string('Start', 'Start', 'crrt', false);
+    pll_register_string('End', 'End', 'crrt', false);
+    pll_register_string('YouHaveBooked', 'You have booked a', 'crrt', false);
+
+    pll_register_string('SuccessMessage', 'Success message', 'crrt', false);
+    pll_register_string('ExploreMore', 'Explore More', 'crrt', false);
 }

@@ -40,7 +40,9 @@ get_header();
     <?php $recommended_ids = get_carbon_association_ids(carbon_get_the_post_meta('news_recommended')); ?>
     <?php if (!empty($recommended_ids)) : ?>
     <section class="section blog">
-        <h2 class="section-title">Читайте больше</h2>
+        <h2 class="section-title">
+            <?php pll_e('Explore More', 'crrt'); ?>
+        </h2>
         <div class="container blog__container">
             <div class="blog__masonry">
                 <?php

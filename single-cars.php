@@ -138,6 +138,7 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                             <?php endforeach; ?>
                         </ul>
                     </div>
+                    <?php /*
                     <div class="select hero__bookform-select">
                         <select class="select__input"
                                 name="location_end"
@@ -157,6 +158,16 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                             <?php endforeach; ?>
                         </ul>
                     </div>
+                    */?>
+
+                    <label class="input js_form__control">
+                        <input
+                                class="input__field"
+                                name="flight_number"
+                                type="text"
+                                placeholder="<?php pll_e('Flight number', 'crrt'); ?>"
+                        >
+                    </label>
 
                     <label class="input js_form__control">
                         <input

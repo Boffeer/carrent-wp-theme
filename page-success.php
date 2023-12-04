@@ -71,7 +71,7 @@ get_header();
         ?>
         <div class="container faq__container">
             <h1 class="section-title faq__title" data-aos="fade-up">
-                Вы забронировали <br>
+                <?php pll_e('You have booked a', 'crrt'); ?> <br>
                 <?php echo $car['title']; ?>
             </h1>
             <div class="faq__content">
@@ -79,12 +79,12 @@ get_header();
                     <article class="blog-card">
                         <div class="blog-card__info">
                             <h3 class="blog-card__title">
-                                Номер заказа
+                                <?php pll_e('Order number', 'crrt'); ?> <br>
                             </h3>
                             <p class="blog-card__desc"><?php echo $booking_info['crm_booking_id']; ?></p>
 
                             <h3 class="blog-card__title">
-                                Забрать машину
+                                <?php pll_e('Start', 'crrt'); ?> <br>
                             </h3>
                             <p class="blog-card__desc">
                                 <?php echo $booking_info['location_start']; ?> <br>
@@ -93,10 +93,10 @@ get_header();
                             </p>
 
                             <h3 class="blog-card__title">
-                                Отдать машину
+                                <?php pll_e('End', 'crrt'); ?> <br>
                             </h3>
                             <p class="blog-card__desc">
-                                <?php echo $booking_info['location_end']; ?> <br>
+                                <?php echo !empty($booking_info['location_end']) ? $booking_info['location_end'] : $booking_info['location_start'] ?> <br>
                                 <?php echo $booking_info['date_end']; ?> <br>
                                 <?php echo $booking_info['time_end']; ?>
                             </p>
@@ -124,7 +124,7 @@ get_header();
                     <h3 class="faq-help__title"></h3>
                     <?php $phone = explode_textarea(THEME_OPTIONS['phones'])[0]; ?>
                     <p class="faq-help__desc">
-                        Если возникнут вопросы, свяжитесь с нами в соцсетях или по телефону
+                        <?php echo pll_e('Success message', 'crrt');?>
                         <a href="<?php echo phone_to_href($phone);?>" class="link"><?php echo $phone; ?></a>
                     </p>
 

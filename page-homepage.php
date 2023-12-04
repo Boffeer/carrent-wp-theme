@@ -64,6 +64,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                             <?php endforeach; ?>
                         </ul>
                     </div>
+                    <?php /*
                     <div class="select hero__bookform-select">
                         <select class="select__input js_form__control"
                                 name="location_end"
@@ -83,6 +84,16 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                             <?php endforeach; ?>
                         </ul>
                     </div>
+                    */ ?>
+
+                    <label class="input js_form__control">
+                        <input
+                                class="input__field"
+                                name="flight_number"
+                                type="text"
+                                placeholder="<?php pll_e('Flight number', 'crrt'); ?>"
+                        >
+                    </label>
                     <div class="hero__bookform-range b_rangepicker" data-lang="<?php echo pll_current_language(); ?>">
                         <label class="input b_datepicker js_form__control" data-lang="<?php echo pll_current_language(); ?>">
                             <input
