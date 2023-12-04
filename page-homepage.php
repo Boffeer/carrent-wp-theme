@@ -194,6 +194,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
         'orderby'        => 'date',
         'order'          => 'DESC',
         'post_status'    => 'publish',
+        'lang' =>  pll_current_language(),
     );
     $cars = new WP_Query($cars_args);
     ?>

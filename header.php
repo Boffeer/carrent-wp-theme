@@ -36,6 +36,7 @@
                 <?php echo $logo; ?>
             </a>
 
+
             <div class="header__menu menu">
                 <nav class="menu__nav">
                     <ul class="menu__nav-links">
@@ -46,10 +47,27 @@
                             ?>
                             <li class="menu__nav-item <?php echo $has_children ? 'menu__nav-item--has-children' : ''; ?>">
                                 <a href="<?php echo $menu['href']; ?>" class="menu__nav-link"><?php pll_e($menu['title'], 'crrt'); ?></a>
+                                <?php if (!$has_children) continue; ?>
                                 <div class="menu__nav-dropdown">
-                                    <a href="#" class="menu__nav-link menu__nav-dropdown-link">Купе</a>
-                                    <a href="#" class="menu__nav-link menu__nav-dropdown-link">Сенданы</a>
-                                    <a href="#" class="menu__nav-link menu__nav-dropdown-link">Маслкары</a>
+                                    <div class="menu__nav-dropdown-content">
+                                    <?php
+                                    $cars_args = array(
+                                        'post_type'      => 'cars',
+                                        'posts_per_page' => -1,
+                                        'orderby'        => 'date',
+                                        'order'          => 'DESC',
+                                        'post_status'    => 'publish',
+                                    );
+                                    $cars = new WP_Query($cars_args);
+                                    ?>
+                                    <?php if ($cars->have_posts()) : ?>
+                                        <?php while ($cars->have_posts()) : $cars->the_post(); ?>
+                                            <a href="<?php the_permalink(); ?>" class="menu__nav-link menu__nav-dropdown-link">
+                                                <?php echo carbon_get_the_post_meta('car_name'); ?>
+                                            </a>
+                                        <?php endwhile; wp_reset_query(); ?>
+                                    <?php endif; ?>
+                                    </div>
                                 </div>
                             </li>
                         <?php endforeach; ?>
