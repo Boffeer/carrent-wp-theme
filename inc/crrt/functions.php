@@ -17,19 +17,24 @@ function get_stripe_paylink()
 
     $date_start = $date_start . ' ' . $time_start;
     $date_end = $date_end . ' ' . $time_end;
+    if (empty($date_end)) {
+        $date_end = $date_start;
+    }
 
     $user_phone = $_POST['user_phone'];
     $user_email = $_POST['user_email'];
 
-    $location_start = $_POST['location_start'];
-    $location_end = $_POST['location_end'];
+    $location_start = isset($_POST['location_start']) ? $_POST['location_start'] : '';
+    $location_end = isset($_POST['location_end']) ? $_POST['location_end'] : $_POST['location_start'];
 
-    $flight_number = $_POST['flight_number'];
+    $flight_number = empty($_POST['flight_number']) ? 'Flight number: ' . $_POST['flight_number'] : '';
+    $cancel_page = $_POST['cancel_page'];
 
     $car = array(
         'crm_id' => carbon_get_post_meta($post_id, 'rentprog_id'),
         'name' => carbon_get_post_meta($post_id, 'car_name'),
         'prices' => explode(',', carbon_get_post_meta($post_id, 'prices')),
+        'image' => get_image_url_by_id(carbon_get_post_meta($post_id, 'photos')[0]),
     );
 
     $car['price'] = get_price_per_day($car['prices'], $date_start, $date_end);
@@ -46,21 +51,15 @@ function get_stripe_paylink()
     $product_info = array(
         'name' => "{$car['name']} (" . count($car['price']['range']) . " days)",
         'price' => $car['price']['total'] * 100,
+        'image' => $car['image'],
+        'description' => "{$location_start}, {$date_start} - {$date_end}",
     );
     $booking_id = uniqid();
 
     $domain = $_SERVER['SERVER_NAME'];
 
-    $key_type = carbon_get_theme_option('stripe_key_type');
-    if ($key_type === 'prod') {
-        $key_type = '';
-    } else {
-        $key_type.= '_';
-    }
-
-
-    $stripe_secret_key = carbon_get_theme_option($key_type.'stripe_secret_key');
     $stripe_api_url = 'https://api.stripe.com/v1/checkout/sessions';
+    $stripe_secret_key = get_stripe_secret();
 
     // Set your Stripe secret key
     $headers = [
@@ -75,6 +74,8 @@ function get_stripe_paylink()
                     'currency' => $currency,
                     'product_data' => [
                         'name' => $product_info['name'],
+                        'images' => [$product_info['image']],
+                        'description' => $product_info['description'],
                     ],
                     'unit_amount' => $product_info['price'], // Amount in cents (e.g., $19.99)
                 ],
@@ -83,7 +84,8 @@ function get_stripe_paylink()
         ],
         'mode' => 'payment',
         'success_url' => "https://{$domain}/success?car_booking_id={$booking_id}",
-        'cancel_url' => "https://{$domain}",
+        'cancel_url' => $cancel_page,
+//        'cancel_url' => "https://{$domain}",
         'payment_intent_data' => [
             'metadata' => [
                 'user_phone' => $user_phone,
@@ -99,6 +101,7 @@ function get_stripe_paylink()
             ],
         ],
 //        'discounts' => [['coupon' => 'shit']],
+        'allow_promotion_codes' => 'true', // Enable promotion codes
         'customer_email' => $user_email,
         'client_reference_id' => $user_phone,
     ];
@@ -124,19 +127,15 @@ function get_stripe_paylink()
     $paylink = $session_data['url'];
 
     echo json_encode(array(
-//        'post_id' => $post_id,
         'session_data' => $session_data,
         'paylink' => $paylink,
-//        'car' => $car,
-//        'date_start' => $date_start,
-//        'date_end' => $date_end,
+        'coupons' => check_stripe_coupon('test'),
     ), JSON_UNESCAPED_UNICODE);
     wp_die();
 }
 
 function get_price_per_day($prices, $date_start, $date_end) {
     $date_range = get_dates_range($date_start, $date_end);
-//    $date_range = getDatesRange($date_start, $date_end);
     $days_count = count($date_range);
 
     $price_index = 0;
@@ -181,6 +180,8 @@ function handle_stripe_webhook() {
         $email = $event_json->data->object->billing_details->email;
         $name = $event_json->data->object->billing_details->name;
 
+        $receipt_url = $event_json->data->object->receipt_url;
+
         $phone = $event_json->data->object->metadata->user_phone;
         $product_id = $event_json->data->object->metadata->product_id;
         $date_start = $event_json->data->object->metadata->date_start;
@@ -191,6 +192,7 @@ function handle_stripe_webhook() {
         $location_end = $event_json->data->object->metadata->location_end;
         $booking_id = $event_json->data->object->metadata->booking_id;
         $flight_number = $event_json->data->object->metadata->flight_number;
+
 
 
         $payment_intent = $event_json->data->object->payment_intent;
@@ -236,6 +238,7 @@ function handle_stripe_webhook() {
         carbon_set_post_meta( $post_id, 'location_start', $location_start);
         carbon_set_post_meta( $post_id, 'location_end', $location_end);
         carbon_set_post_meta( $post_id, 'flight_number', $flight_number);
+        carbon_set_post_meta( $post_id, 'receipt_url', $receipt_url);
 
         $booking = create_booking($post_id);
 
@@ -270,6 +273,8 @@ function create_booking($booking_post_id) {
         'email' =>  carbon_get_post_meta($id, 'email'),
         'days' => count(get_dates_range($date_start, $date_end)),
         'price' => (int) carbon_get_post_meta($id, 'amount') / 100,
+        'receipt_url' => carbon_get_post_meta($id, 'receipt_url'),
+        'flight_number' => carbon_get_post_meta($id, 'flight_number'),
     );
 
     $data_url = 'https://rentprog.pro/api/v1/public/create_booking';
@@ -301,7 +306,8 @@ function create_booking($booking_post_id) {
         "birthday" => "",
         "address" => "",
 
-        "description" => "",
+//        "description" => "",
+        "description" => "Receipt: {$booking['receipt_url']}. \n\n{$booking['flight_number']}",
         "days" => $booking['days']
     );
 
@@ -391,6 +397,7 @@ function crrt_register_translate() {
     pll_register_string('And', 'and', 'crrt', false);
     pll_register_string('Options', 'Options', 'crrt', false);
     pll_register_string('Languages', 'Languages', 'crrt', false);
+    pll_register_string('Promocode', 'Promocode', 'crrt', false);
 
     pll_register_string('NumberSeats', 'number_seats', 'crrt', false);
     pll_register_string('Transmission', 'transmission', 'crrt', false);
@@ -434,9 +441,46 @@ function crrt_register_translate() {
 }
 
 function get_stripe_secret() {
-
+    $key_type = carbon_get_theme_option('stripe_key_type');
+    if ($key_type === 'prod') {
+        $key_type = '';
+    } else {
+        $key_type.= '_';
+    }
+    $stripe_secret_key = carbon_get_theme_option($key_type.'stripe_secret_key');
+    return $stripe_secret_key;
 }
 
-function check_coupon() {
+function check_stripe_coupon($couponCode)
+{
+    $stripe_api_url = 'https://api.stripe.com/v1/coupons';
+    $stripe_secret_key = get_stripe_secret();
 
+    $curl = curl_init();
+
+    curl_setopt_array($curl, [
+        CURLOPT_URL => $stripe_api_url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_POSTFIELDS => "",
+        CURLOPT_HTTPHEADER => [
+            "Authorization: Bearer ".$stripe_secret_key,
+            "Content-Type: application/json",
+        ],
+    ]);
+
+    $response = curl_exec($curl);
+    $err = curl_error($curl);
+
+    curl_close($curl);
+
+    if ($err) {
+        return $err;
+    } else {
+        return json_decode($response);
+    }
 }

@@ -81,13 +81,13 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                     $date_start = isset($_GET['date_start']) ? esc_html($_GET['date_start']) : '';
                     $date_end = isset($_GET['date_end']) ? esc_html($_GET['date_end']) : '';
                 ?>
-                <div class="product-hero__calendar b_rangepicker b_rangepicker--inline"
+                <div class="product-hero__calendar b_rangepicker b_rangepicker--inline js_form__control"
                      data-disabled="<?php echo $disabled_dates; ?>"
                      data-hour-gap="<?php echo carbon_get_theme_option('min_hour_booking_gap'); ?>"
                      data-default-date="<?php echo $date_start.','.$date_end; ?>"
                      data-lang="<?php echo pll_current_language(); ?>"
                 >
-                    <input class="input__field" type="text">
+                    <input class="input__field" type="text" required>
                     <input class="is-hidden" name="date_start" type="text">
                     <input class="is-hidden" name="date_end" type="text">
                 </div>
@@ -99,6 +99,7 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
 
                 ?>
                 <div class="product-hero__form product-hero__info-columns">
+                    <input class="is-hidden" type="text" value="" name="cancel_page">
                     <div class="timepicker hero__bookform-timepicker"
                          data-min="08:00"
                          data-max="20:00"

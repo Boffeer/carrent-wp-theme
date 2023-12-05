@@ -78,10 +78,12 @@ get_header();
                 <div class="faq__list">
                     <article class="blog-card">
                         <div class="blog-card__info">
-                            <h3 class="blog-card__title">
-                                <?php pll_e('Order number', 'crrt'); ?> <br>
-                            </h3>
-                            <p class="blog-card__desc"><?php echo $booking_info['crm_booking_id']; ?></p>
+                            <?php if (empty($booking_info['crm_booking_id'])) : ?>
+                                <h3 class="blog-card__title">
+                                    <?php pll_e('Order number', 'crrt'); ?> <br>
+                                </h3>
+                                <p class="blog-card__desc"><?php echo $booking_info['crm_booking_id']; ?></p>
+                            <?php endif; ?>
 
                             <h3 class="blog-card__title">
                                 <?php pll_e('Start', 'crrt'); ?> <br>
