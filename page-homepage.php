@@ -32,7 +32,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                 <h2 class="section-title hero__title">
                     <?php echo typograph($title); ?>
                 </h2>
-                <div class="bookform hero__bookform js_form js_form--no-lock-button js_form--no-reset"
+                <div class="bookform hero__bookform js_form js_form--no-reset"
                      data-route="<?php echo FORM_URLS['ajax']?>"
                      data-action="filter_cars"
                 >
@@ -45,8 +45,8 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                             hidden
                             value="<?php echo pll_current_language(); ?>"
                     >
-                    <div class="select hero__bookform-select">
-                        <select class="select__input js_form__control"
+                    <div class="select hero__bookform-select js_form__control">
+                        <select class="select__input"
                                 name="location_start"
                                 tabindex="-1"
                                 required>

@@ -242,6 +242,9 @@ function filter_cars() {
         $free_cars_ids[] = "{$car['id']}";
     }
 
+    $flight_number = $_POST['flight_number'];
+    $location_start = $_POST['location_start'];
+
     $args = array(
         'post_type' => 'cars', // Replace with your post type
         'posts_per_page' => -1, // Use -1 to retrieve all posts
@@ -251,7 +254,6 @@ function filter_cars() {
                 'key' => 'rentprog_id', // Replace with your actual custom field name
                 'value' => $free_cars_ids, // Replace with the value you want to filter by
                 'compare' => 'IN', // Use '=' for exact match
-//                 'type'    => 'CHAR', // You can specify the data type if needed
             ),
         ),
     );
@@ -276,6 +278,8 @@ function filter_cars() {
         'ids' => $free_cars_ids,
         'search_start' => $search_start,
         'search_end' => $search_end,
+        'flight_number' => $flight_number,
+        'location_start' => $location_start,
         'messages' => array(
             'empty' => pll__('Cars empty', 'crrt'),
         ),

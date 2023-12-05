@@ -98,6 +98,7 @@ function get_stripe_paylink()
                 'flight_number' => $flight_number,
             ],
         ],
+//        'discounts' => [['coupon' => 'shit']],
         'customer_email' => $user_email,
         'client_reference_id' => $user_phone,
     ];
@@ -124,7 +125,7 @@ function get_stripe_paylink()
 
     echo json_encode(array(
 //        'post_id' => $post_id,
-//        'session_data' => $session_data,
+        'session_data' => $session_data,
         'paylink' => $paylink,
 //        'car' => $car,
 //        'date_start' => $date_start,
@@ -430,4 +431,12 @@ function crrt_register_translate() {
     pll_register_string('ExploreMore', 'Explore More', 'crrt', false);
 
     pll_register_string('CarsEmpty', 'Cars empty', 'crrt', false);
+}
+
+function get_stripe_secret() {
+
+}
+
+function check_coupon() {
+
 }

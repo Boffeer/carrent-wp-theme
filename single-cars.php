@@ -119,7 +119,7 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                         </div>
                         <input class="timepicker__value" type="text" name="time_end" inputmode="numeric" value="14:10">
                     </div>
-                    <div class="select hero__bookform-select">
+                    <div class="select hero__bookform-select js_form__control">
                         <select class="select__input"
                                 name="location_start"
                                 tabindex="-1"

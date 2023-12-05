@@ -41,7 +41,7 @@ if (!function_exists('typograph')) {
 		if ($is_shortcode) {
 			return do_shortcode( nl2br(get_nbsp_text($text)) );
 		}
-		return nl2br(get_nbsp_text($text));
+		return esc_html(nl2br(get_nbsp_text($text)));
 	}
 }
 
