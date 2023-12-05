@@ -97,13 +97,18 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                     $locations_from = explode_textarea(carbon_get_post_meta($homepage_id, 'location_start_names'));
                     $locations_to = explode_textarea(carbon_get_post_meta($homepage_id, 'location_end_names'));
 
+                    $timepicker_settings = array(
+                        'min' => carbon_get_theme_option('time_min'),
+                        'max' => carbon_get_theme_option('time_max'),
+                        'step' => carbon_get_theme_option('time_step'),
+                    );
                 ?>
                 <div class="product-hero__form product-hero__info-columns">
                     <input class="is-hidden" type="text" value="" name="cancel_page">
                     <div class="timepicker hero__bookform-timepicker"
-                         data-min="08:00"
-                         data-max="20:00"
-                         data-step="15"
+                         data-min="<?php echo $timepicker_settings['min']; ?>"
+                         data-max="<?php echo $timepicker_settings['max']; ?>"
+                         data-step="<?php echo $timepicker_settings['step']; ?>"
                     >
                         <div class="timepicker__control">
                             <div class="timepicker__drag"></div>
@@ -111,9 +116,9 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                         <input class="timepicker__value" type="text" name="time_start" inputmode="numeric">
                     </div>
                     <div class="timepicker hero__bookform-timepicker"
-                         data-min="08:00"
-                         data-max="20:00"
-                         data-step="15"
+                         data-min="<?php echo $timepicker_settings['min']; ?>"
+                         data-max="<?php echo $timepicker_settings['max']; ?>"
+                         data-step="<?php echo $timepicker_settings['step']; ?>"
                     >
                         <div class="timepicker__control">
                             <div class="timepicker__drag"></div>

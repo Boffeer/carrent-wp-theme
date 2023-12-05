@@ -16,9 +16,13 @@ Container::make('theme_options', 'theme_settings',  'Theme settings')
         Field::make('image', 'default_og_img', 'Default socials image')
             ->set_width(20),
         Field::make('text', 'currency', 'Currency'),
-        Field::make('text', 'min_hour_booking_gap', 'Minimum Hour Gap Between Bookings'),
-        Field::make('text', 'time_min', 'Earliest booking time'),
-        Field::make('text', 'time_max', 'Latest booking time'),
+//        Field::make('text', 'min_hour_booking_gap', 'Minimum Hour Gap Between Bookings'),
+        Field::make('text', 'time_min', 'Earliest booking time')
+            ->set_width(33),
+        Field::make('text', 'time_max', 'Latest booking time')
+            ->set_width(33),
+        Field::make('text', 'time_step', 'Timepicker minutes step')
+            ->set_width(33),
 
 		Field::make('header_scripts', 'crb_header_script', 'Header Script'),
 		Field::make('footer_scripts', 'crb_footer_script', 'Footer Script'),

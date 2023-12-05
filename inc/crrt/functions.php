@@ -427,6 +427,14 @@ function crrt_register_translate() {
     pll_register_string('UsbSystem', 'usb_system', 'crrt', false);
     pll_register_string('ClimateControl', 'climate_control', 'crrt', false);
     pll_register_string('RainSensor', 'rain_sensor', 'crrt', false);
+    pll_register_string('ParktronicBack', 'parktronic_back', 'crrt', false);
+    pll_register_string('ParktronicCamera', 'parktronic_camera', 'crrt', false);
+    pll_register_string('WheelAdjustment', 'wheel_adjustment', 'crrt', false);
+    pll_register_string('WheelAdjustmentFull', 'wheel_adjustment_full', 'crrt', false);
+    pll_register_string('VideoSystem', 'video_system', 'crrt', false);
+    pll_register_string('CdSystem', 'cd_system', 'crrt', false);
+    pll_register_string('FoldingSeats', 'folding_seats', 'crrt', false);
+    pll_register_string('HeatedWindshield', 'heated_windshield', 'crrt', false);
 
     pll_register_string('Fleet', 'Fleet', 'crrt', false);
     pll_register_string('OrderNumber', 'Order number', 'crrt', false);
