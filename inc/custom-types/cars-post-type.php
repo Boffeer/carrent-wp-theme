@@ -128,7 +128,8 @@ function register_cars_fields() {
 
 add_action('admin_enqueue_scripts', 'enqueue_custom_js_for_cars');
 function enqueue_custom_js_for_cars() {
-    if (is_admin() && isset($_GET['post']) && get_post_type($_GET['post']) === 'cars') {
+    if (is_admin() && isset($_GET['post']) && get_post_type($_GET['post']) === 'cars' && (isset($_GET['action']) && in_array($_GET['action'], array('edit', 'post')))) {
+//    if (is_admin() && isset($_GET['post']) && get_post_type($_GET['post']) === 'cars') {
         // Get the current post object
         $post = get_post($_GET['post']);
 
@@ -212,6 +213,8 @@ function get_car_content($id) {
     $prices_list = explode(',', carbon_get_post_meta($id, 'prices'));
     $last_index = count($prices_list) - 1;
     $price = $prices_list[$last_index];
+    $tariff_names = explode_textarea(carbon_get_post_meta(HOMEPAGE_ID, 'price_tariffs'));
+    $tariff_cheap  = $tariff_names[$last_index];
 
     $car = array(
         'id' => $id,
@@ -224,7 +227,8 @@ function get_car_content($id) {
         'trunk_volume' => carbon_get_post_meta($id, 'trunk_volume'),
         'transmission' => carbon_get_post_meta($id, 'transmission'),
         'currency' => carbon_get_theme_option('currency'),
-        'text_price_hint' => pll__('Rent Caption', 'crrt'),
+        'text_price_hint' => $tariff_cheap,
+//        'text_price_hint' => pll__('Rent Caption', 'crrt'),
         'text_book' => pll__('Select a Car', 'crrt'),
     );
     return $car;
@@ -327,7 +331,12 @@ function get_car_bookings($car_id) {
 }
 
 function get_car_bookings_timestamps($id) {
-    $bookings = get_car_bookings($id)['active_bookings'];
+    $bookings = get_car_bookings($id);
+    if (isset($bookings['active_bookings'])) {
+        $bookings = $bookings['active_bookings'];
+    } else {
+        $bookings = [];
+    }
 
     $active_bookings = array();
     foreach ($bookings as $book) {

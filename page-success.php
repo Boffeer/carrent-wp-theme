@@ -120,7 +120,7 @@ get_header();
                     <div class="faq-help__media">
                         <picture class="faq-help__media-pic">
                             <!-- <source srcset="<?php echo THEME_STATIC; ?>/img/faq/faq-hero.jpg.webp" type="image/webp"> -->
-                            <img src="<?php echo THEME_STATIC; ?>/img/common/loader.svg" data-src="<?php echo $car['thumb']; ?>" alt="<?php echo $faq_title; ?>" class="faq-help__media-img lazy">
+                            <img src="<?php echo THEME_STATIC; ?>/img/common/loader.svg" data-src="<?php echo $car['thumb']; ?>" alt="" class="faq-help__media-img lazy">
                         </picture>
                     </div>
                     <h3 class="faq-help__title"></h3>
@@ -132,7 +132,7 @@ get_header();
 
                     <div class="faq__socials socials">
                         <?php foreach ($socials as $social) : ?>
-                            <a class="socials__link socials__link--<?php echo $social['key']; ?>" aria-label="<?php echo isset($social['text']) ? $social['text'] : ''; ?>"
+                            <a class="socials__link"
                                href="<?php echo $social['href']; ?>" target="_blank" rel="noopener noreferrer"
                             >
                                 <img class="socials__icon" src="<?php echo $social['icon']; ?>" alt="<?php echo isset($social['text']) ? $social['text'] : ''; ?>">

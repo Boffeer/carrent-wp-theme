@@ -37,7 +37,7 @@
         <div class="footer__links">
             <div class="socials footer__socials">
                 <?php foreach ($socials as $social) : ?>
-                    <a class="socials__link socials__link--<?php echo $social['key']; ?>" aria-label="<?php echo isset($social['text']) ? $social['text'] : ''; ?>"
+                    <a class="socials__link socials__link--<?php echo isset($social['key']) ? $social['key'] : ''; ?>" aria-label="<?php echo isset($social['text']) ? $social['text'] : ''; ?>"
                        href="<?php echo $social['href']; ?>" target="_blank" rel="noopener noreferrer"
                     >
                         <img class="socials__icon" src="<?php echo $social['icon']; ?>" alt="<?php echo isset($social['text']) ? $social['text'] : ''; ?>">

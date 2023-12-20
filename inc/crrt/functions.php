@@ -127,9 +127,9 @@ function get_stripe_paylink()
     $paylink = $session_data['url'];
 
     echo json_encode(array(
-        'session_data' => $session_data,
+//        'session_data' => $session_data,
         'paylink' => $paylink,
-        'coupons' => check_stripe_coupon('test'),
+//        'coupons' => check_stripe_coupon('test'),
     ), JSON_UNESCAPED_UNICODE);
     wp_die();
 }
@@ -171,7 +171,7 @@ function handle_stripe_webhook() {
     $body = @file_get_contents('php://input');
     $event_json = json_decode($body);
 
-
+//    echo json_encode(array('test' => 'test', 'event' => $event_json));
 
     if ($event_json->type === 'charge.succeeded') {
         $event_id = $event_json->id;

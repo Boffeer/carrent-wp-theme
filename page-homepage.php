@@ -226,7 +226,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
 
 <?php $reviews_ids = get_carbon_association_ids(carbon_get_the_post_meta('home_reviews')); ?>
 <?php if (!empty($reviews_ids)) : ?>
-    <section class="section reviews">
+    <section class="section reviews" id="reviews">
         <div class="container reviews__container">
             <h2 class="section-title section-text--center reviews__title">
                 <?php pll_e('Reviews', 'crrt'); ?>
@@ -330,7 +330,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
 
                     <div class="faq__socials socials">
                         <?php foreach ($socials as $social) : ?>
-                            <a class="socials__link socials__link--<?php echo $social['key']; ?>" aria-label="<?php echo isset($social['text']) ? $social['text'] : ''; ?>"
+                            <a class="socials__link"
                                href="<?php echo $social['href']; ?>" target="_blank" rel="noopener noreferrer"
                             >
                                 <img class="socials__icon" src="<?php echo $social['icon']; ?>" alt="<?php echo isset($social['text']) ? $social['text'] : ''; ?>">

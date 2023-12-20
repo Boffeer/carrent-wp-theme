@@ -28,7 +28,12 @@ endif;
 
 function phone_to_href($phone, $country =  '+7') {
     $phone = $phone == null ? '' : $phone;
-	return 'tel:' . substr_replace( preg_replace( "/[^0-9]/" , '' ,  $phone) , $country , 0 , 1 );
+    $theme_country_code = carbon_get_theme_option('phone_country_code');
+    if ($country != $theme_country_code) {
+        $country = $theme_country_code;
+    }
+
+	return 'tel:' . substr_replace( preg_replace( "/[^0-9]/" , '' ,  $phone) , $country , 0 , strlen($theme_country_code) - 1);
 }
 
 if ( !function_exists('hex2rgb') ) :
