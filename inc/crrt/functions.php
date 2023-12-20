@@ -40,6 +40,25 @@ function get_stripe_paylink()
     $car['price'] = get_price_per_day($car['prices'], $date_start, $date_end);
     unset($car['prices']);
 
+
+    $options_to_count = array();
+    $options_list = carbon_get_post_meta($post_id, 'car_options');
+    $active_options = explode(',', $_POST['options']);
+    foreach ($active_options as $option) {
+        foreach ($options_list as $option_info) {
+            if ($option_info['name'] === $option) {
+                $option_prices = explode(',', $option_info['prices']);
+                $current_option = get_price_per_day($option_prices, $date_start, $date_end);
+                $current_option['name'] = $option;
+                $options_to_count[] = $current_option;
+            }
+        }
+
+    }
+    foreach ($options_to_count as $option) {
+//        $car['price']['total'] = $car['price']['total'] + $option['total'];
+    }
+
     $currencies = array(
         'eur' => 'eur',
         '€' => 'eur',
@@ -61,6 +80,34 @@ function get_stripe_paylink()
     $stripe_api_url = 'https://api.stripe.com/v1/checkout/sessions';
     $stripe_secret_key = get_stripe_secret();
 
+    $line_items = array(
+        [
+            'price_data' => [
+                'currency' => $currency,
+                'product_data' => [
+                    'name' => $product_info['name'],
+                    'images' => [$product_info['image']],
+                    'description' => $product_info['description'],
+                ],
+                'unit_amount' => $product_info['price'], // Amount in cents (e.g., $19.99)
+            ],
+            'quantity' => 1,
+        ],
+    );
+    foreach ($options_to_count as $option) {
+//        $car['price']['total'] = $car['price']['total'] + $option['total'];
+        $line_items[] = [
+            'price_data' => [
+                'currency' => $currency,
+                'product_data' => [
+                    'name' => $option['name'],
+                ],
+                'unit_amount' => $option['total'] * 100, // Amount in cents (e.g., $19.99)
+            ],
+            'quantity' => 1,
+        ];
+    }
+
     // Set your Stripe secret key
     $headers = [
         'Authorization: Bearer ' . $stripe_secret_key,
@@ -68,20 +115,7 @@ function get_stripe_paylink()
     ];
     $data = [
         'payment_method_types' => ['card'],
-        'line_items' => [
-            [
-                'price_data' => [
-                    'currency' => $currency,
-                    'product_data' => [
-                        'name' => $product_info['name'],
-                        'images' => [$product_info['image']],
-                        'description' => $product_info['description'],
-                    ],
-                    'unit_amount' => $product_info['price'], // Amount in cents (e.g., $19.99)
-                ],
-                'quantity' => 1,
-            ],
-        ],
+        'line_items' => $line_items,
         'mode' => 'payment',
         'success_url' => "https://{$domain}/success?car_booking_id={$booking_id}",
         'cancel_url' => $cancel_page,
@@ -128,6 +162,8 @@ function get_stripe_paylink()
 
     echo json_encode(array(
 //        'session_data' => $session_data,
+        'car' => $car,
+        'options' => $options_to_count,
         'paylink' => $paylink,
 //        'coupons' => check_stripe_coupon('test'),
     ), JSON_UNESCAPED_UNICODE);
@@ -151,7 +187,8 @@ function get_price_per_day($prices, $date_start, $date_end) {
         $price_index = 4;
     }
 
-    $price_per_day = $prices[$price_index];
+    $price_per_day = isset($prices[$price_index]) ? $prices[$price_index] : end($prices);
+//    $price_per_day = $prices[$price_index];
     $total = $price_per_day  * $days_count;
 
     return array(

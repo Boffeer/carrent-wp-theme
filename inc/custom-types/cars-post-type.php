@@ -52,6 +52,16 @@ function register_cars_fields() {
         ))
 
 
+        ->add_tab('Car data', array(
+            Field::make( 'complex', 'car_options', __( 'Car Options' ) )
+                ->add_fields( array(
+                    Field::make( 'text', 'name', __( 'Option name' ) )
+                        ->set_width(50),
+                    Field::make( 'text', 'prices', __( 'prices' ) )
+                        ->set_width(50)
+                        ->set_help_text('Comma separated. Use rentprog price ranges: 50,40,30,20,10. <br> Or use '),
+                ) )
+        ))
         ->add_tab('API', array(
             Field::make( 'text', 'car_name', __( 'Car name' ) ),
             Field::make( 'textarea', 'description', __( 'Description' ) ),

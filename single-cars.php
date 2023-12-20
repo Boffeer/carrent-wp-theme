@@ -87,7 +87,7 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                      data-default-date="<?php echo $date_start.','.$date_end; ?>"
                      data-lang="<?php echo pll_current_language(); ?>"
                 >
-                    <input class="input__field" type="text" required>
+                    <input class="input__field js_form__control" type="text" required>
                     <input class="is-hidden" name="date_start" type="text">
                     <input class="is-hidden" name="date_end" type="text">
                 </div>
@@ -193,18 +193,61 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                                 required
                         >
                     </label>
+
+                    <label class="input b_datepicker js_form__control" data-lang="<?php echo pll_current_language(); ?>">
+                        <input
+                                class="input__field"
+                                type="text"
+                                placeholder="<?php echo pll_e('Date of birth', 'crrt'); ?>"
+                                name="dob"
+                                readonly
+                                required
+                        >
+                    </label>
                 </div>
+                <?php
+                $options = carbon_get_the_post_meta('car_options');
+                    $tariff_names = explode_textarea(carbon_get_post_meta(HOMEPAGE_ID, 'price_tariffs'));
+                ?>
+                <?php if (!empty($options)) : ?>
+                    <div class="product-hero__group">
+                        <h3 class="product-hero__group-title"> <?php pll_e('Options', 'crrt'); ?> </h3>
+                        <?php foreach ($options as $option) : ?>
+                            <div class="product-hero__group-item">
+                                <label class="checkbox">
+                                    <input type="checkbox" name="options" class="checkbox__input" value="<?php echo $option['name'];?>">
+                                    <span class="checkbox__check"></span>
+                                    <span class="checkbox__content">
+                                        <p class="checkbox__content-title"><?php echo $option['name'];?></p>
+                                        <span class="checkbox__pill-list">
+                                            <?php foreach (explode(',', $option['prices']) as $range => $price) :?>
+                                                <span class="checkbox__pill" data-range="<?php echo $tariff_names[$range]; ?>">
+                                                    <span class="checkbox__pill-head">
+                                                        <span><?php echo $price; ?></span>
+                                                        <span class="currency"><?php echo THEME_OPTIONS['currency']; ?></span>
+                                                    </span>
+                                                    <span class="checkbox__pill-body">
+                                                        <?php echo typograph($tariff_names[$range]); ?>
+                                                    </span>
+                                                </span>
+                                            <?php endforeach; ?>
+                                        </span>
+                                    </span>
+                                </label>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
                 <div class="product-hero__bookform-tariffs">
                     <h3 class="product-hero__bookform-tariffs-title"><?php pll_e('Rates', 'crrt'); ?></h3>
 
                     <?php
                         $prices = [];
                         $prices = explode(',', carbon_get_the_post_meta('prices'));
-                        $tariff_names = explode_textarea(carbon_get_post_meta(HOMEPAGE_ID, 'price_tariffs'));
                     ?>
 
                     <?php foreach ($prices as $key => $price) : ?>
-                    <div class="product-hero__bookform-tariff">
+                    <div class="product-hero__bookform-tariff" data-range="<?php echo $tariff_names[$key]; ?>">
                         <div class="product-hero__bookform-tariff-price">
                             <span><?php echo $price; ?></span>
                             <span class="currency"><?php echo THEME_OPTIONS['currency']; ?></span>
@@ -214,33 +257,31 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                         </div>
                     </div>
                     <?php endforeach; ?>
-
-                    <button class="button-primary product-hero__bookform-submit js_form__submit"><?php pll_e('Book a car', 'crrt'); ?></button>
-                    <p class="product-hero__bookform-caption">
-                        <?php
-                            $link_privacy = get_carbon_association_ids(carbon_get_post_meta($homepage_id, 'link_privacy'));
-                            $link_offer = get_carbon_association_ids(carbon_get_post_meta($homepage_id, 'link_offer'));
-                        ?>
-<!--                        оплачивая, я соглашусь и принимаю-->
-                        <?php if (isset($link_privacy[0])) : ?>
-                        <?php pll_e('Agree', 'crrt'); ?>
-                        <?php endif ;?>
-
-                        <?php if (isset($link_privacy[0])) : ?>
-                            <a class="link" href="<?php the_permalink($link_privacy[0]); ?>">
-                                <?php echo get_the_title($link_privacy[0]); ?>
-                            </a>
-                        <?php endif; ?>
-                        <?php if (isset($link_privacy[0])) : ?>
-                            <?php pll_e('and', 'crrt'); ?>
-                        <?php endif; ?>
-                        <?php if (isset($link_offer[0])) : ?>
-                            <a class="link" href="<?php the_permalink($link_offer[0]); ?>">
-                                <?php echo get_the_title($link_offer[0]); ?>
-                            </a>
-                        <?php endif; ?>
-                    </p>
                 </div>
+                <button class="button-primary product-hero__bookform-submit js_form__submit" data-currency="<?php echo THEME_OPTIONS['currency']; ?>"><?php pll_e('Book a car', 'crrt'); ?></button>
+                <p class="product-hero__bookform-caption">
+                                                     <?php
+                                                     $link_privacy = get_carbon_association_ids(carbon_get_post_meta($homepage_id, 'link_privacy'));
+                                                     $link_offer = get_carbon_association_ids(carbon_get_post_meta($homepage_id, 'link_offer'));
+                                                     ?>
+                                                     <?php if (isset($link_privacy[0])) : ?>
+                                                     <?php pll_e('Agree', 'crrt'); ?>
+                                                     <?php endif ;?>
+
+                                                     <?php if (isset($link_privacy[0])) : ?>
+                                                     <a class="link" href="<?php the_permalink($link_privacy[0]); ?>">
+                                                     <?php echo get_the_title($link_privacy[0]); ?>
+                                                     </a>
+                                                     <?php endif; ?>
+                                                     <?php if (isset($link_privacy[0])) : ?>
+                                                     <?php pll_e('and', 'crrt'); ?>
+                                                     <?php endif; ?>
+                                                     <?php if (isset($link_offer[0])) : ?>
+                                                     <a class="link" href="<?php the_permalink($link_offer[0]); ?>">
+                                                     <?php echo get_the_title($link_offer[0]); ?>
+                                                     </a>
+                                                     <?php endif; ?>
+                                                     </p>
             </div>
         </div>
         <?php $stats = get_car_stats(get_the_ID()); ?>
