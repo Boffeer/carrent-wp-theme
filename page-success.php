@@ -18,7 +18,7 @@ get_header();
     <div class="breadcrumbs">
         <div class="breadcrumbs__container container">
             <ul class="breadcrumbs__list">
-                <li class="breadcrumbs__item"><a href="/" class="breadcrumbs__link">Главная</a></li>
+                <li class="breadcrumbs__item"><a href="/" class="breadcrumbs__link"><?php pll_e('Homepage', 'crrt'); ?></a></li>
                 <li class="breadcrumbs__item"><?php the_title(); ?></li>
             </ul>
         </div>
@@ -53,6 +53,7 @@ get_header();
 
         <?php
         $booking_info = array(
+            'booking_id' => carbon_get_post_meta($booking_id, 'booking_id'),
             'crm_booking_id' => carbon_get_post_meta($booking_id, 'crm_booking_id'),
             'name' => carbon_get_post_meta($booking_id, 'name'),
             'email' => carbon_get_post_meta($booking_id, 'email'),
@@ -78,11 +79,16 @@ get_header();
                 <div class="faq__list">
                     <article class="blog-card">
                         <div class="blog-card__info">
-                            <?php if (empty($booking_info['crm_booking_id'])) : ?>
+                            <?php if (!empty($booking_info['crm_booking_id'])) : ?>
                                 <h3 class="blog-card__title">
                                     <?php pll_e('Order number', 'crrt'); ?> <br>
                                 </h3>
                                 <p class="blog-card__desc"><?php echo $booking_info['crm_booking_id']; ?></p>
+                            <?php else : ?>
+                                <h3 class="blog-card__title">
+                                    <?php pll_e('Order number', 'crrt'); ?> <br>
+                                </h3>
+                                <p class="blog-card__desc"><?php echo $booking_info['booking_id']; ?></p>
                             <?php endif; ?>
 
                             <h3 class="blog-card__title">

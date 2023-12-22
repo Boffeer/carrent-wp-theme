@@ -73,6 +73,9 @@ function register_car_booking_fields() {
                 ->set_width(50),
             Field::make('text', 'flight_number', 'flight_number'),
             Field::make('text', 'receipt_url', 'receipt_url'),
+            Field::make('text', 'date_of_birth', 'date_of_birth'),
+            Field::make('text', 'agree', 'agree'),
+            Field::make('text', 'options', 'options'),
         ))
 		;
 }

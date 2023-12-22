@@ -259,29 +259,32 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                     <?php endforeach; ?>
                 </div>
                 <button class="button-primary product-hero__bookform-submit js_form__submit" data-currency="<?php echo THEME_OPTIONS['currency']; ?>"><?php pll_e('Book a car', 'crrt'); ?></button>
-                <p class="product-hero__bookform-caption">
-                                                     <?php
-                                                     $link_privacy = get_carbon_association_ids(carbon_get_post_meta($homepage_id, 'link_privacy'));
-                                                     $link_offer = get_carbon_association_ids(carbon_get_post_meta($homepage_id, 'link_offer'));
-                                                     ?>
-                                                     <?php if (isset($link_privacy[0])) : ?>
-                                                     <?php pll_e('Agree', 'crrt'); ?>
-                                                     <?php endif ;?>
-
-                                                     <?php if (isset($link_privacy[0])) : ?>
-                                                     <a class="link" href="<?php the_permalink($link_privacy[0]); ?>">
-                                                     <?php echo get_the_title($link_privacy[0]); ?>
-                                                     </a>
-                                                     <?php endif; ?>
-                                                     <?php if (isset($link_privacy[0])) : ?>
-                                                     <?php pll_e('and', 'crrt'); ?>
-                                                     <?php endif; ?>
-                                                     <?php if (isset($link_offer[0])) : ?>
-                                                     <a class="link" href="<?php the_permalink($link_offer[0]); ?>">
-                                                     <?php echo get_the_title($link_offer[0]); ?>
-                                                     </a>
-                                                     <?php endif; ?>
-                                                     </p>
+                <label class="checkbox js_form__control">
+                    <input type="checkbox" name="agree" class="checkbox__input" value="Agree" required>
+                    <span class="checkbox__check"></span>
+                    <span class="checkbox__content product-hero__bookform-caption">
+                       <?php
+                       $link_privacy = get_carbon_association_ids(carbon_get_post_meta($homepage_id, 'link_privacy'));
+                       $link_offer = get_carbon_association_ids(carbon_get_post_meta($homepage_id, 'link_offer'));
+                       ?>
+                           <?php if (isset($link_privacy[0])) : ?>
+                               <?php pll_e('Agree', 'crrt'); ?>
+                           <?php endif ;?>
+                           <?php if (isset($link_privacy[0])) : ?>
+                               <a class="link" href="<?php the_permalink($link_privacy[0]); ?>">
+                       <?php echo get_the_title($link_privacy[0]); ?>
+                       </a>
+                           <?php endif; ?>
+                           <?php if (isset($link_privacy[0])) : ?>
+                               <?php pll_e('and', 'crrt'); ?>
+                           <?php endif; ?>
+                           <?php if (isset($link_offer[0])) : ?>
+                               <a class="link" href="<?php the_permalink($link_offer[0]); ?>">
+                       <?php echo get_the_title($link_offer[0]); ?>
+                       </a>
+                           <?php endif; ?>
+                   </span>
+                </label>
             </div>
         </div>
         <?php $stats = get_car_stats(get_the_ID()); ?>

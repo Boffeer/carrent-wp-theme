@@ -27,7 +27,7 @@ function get_stripe_paylink()
     $location_start = isset($_POST['location_start']) ? $_POST['location_start'] : '';
     $location_end = isset($_POST['location_end']) ? $_POST['location_end'] : $_POST['location_start'];
 
-    $flight_number = empty($_POST['flight_number']) ? 'Flight number: ' . $_POST['flight_number'] : '';
+    $flight_number = empty($_POST['flight_number']) ? '' . $_POST['flight_number'] : '';
     $cancel_page = $_POST['cancel_page'];
 
     $car = array(
@@ -53,10 +53,6 @@ function get_stripe_paylink()
                 $options_to_count[] = $current_option;
             }
         }
-
-    }
-    foreach ($options_to_count as $option) {
-//        $car['price']['total'] = $car['price']['total'] + $option['total'];
     }
 
     $currencies = array(
@@ -67,11 +63,22 @@ function get_stripe_paylink()
     );
     $currency = $currencies[carbon_get_theme_option('currency')];
 
+    $options_strings = [];
+    foreach ($options_to_count as $option) {
+        $name = $option['name'];
+        $total = $option['total'];
+        $options_strings[] = "$name: $total{$currency}";
+    }
+    $options_string = implode(', ', $options_strings);
+
+    $agree = $_POST['agree'];
+    $date_of_birth = $_POST['dob'];
+
     $product_info = array(
         'name' => "{$car['name']} (" . count($car['price']['range']) . " days)",
         'price' => $car['price']['total'] * 100,
         'image' => $car['image'],
-        'description' => "{$location_start}, {$date_start} - {$date_end}",
+        'description' => "{$location_start}, {$date_start} - {$date_end}, {$options_string}, date of birth: {$date_of_birth}, Agreement: {$agree}",
     );
     $booking_id = uniqid();
 
@@ -95,7 +102,6 @@ function get_stripe_paylink()
         ],
     );
     foreach ($options_to_count as $option) {
-//        $car['price']['total'] = $car['price']['total'] + $option['total'];
         $line_items[] = [
             'price_data' => [
                 'currency' => $currency,
@@ -132,6 +138,9 @@ function get_stripe_paylink()
                 'location_start' => $location_start,
                 'location_end' => $location_end,
                 'flight_number' => $flight_number,
+                'options' => $options_string,
+                'agree' => $agree,
+                'date_of_birth' => $date_of_birth,
             ],
         ],
 //        'discounts' => [['coupon' => 'shit']],
@@ -162,8 +171,8 @@ function get_stripe_paylink()
 
     echo json_encode(array(
 //        'session_data' => $session_data,
-        'car' => $car,
-        'options' => $options_to_count,
+//        'car' => $car,
+//        'options' => $options_to_count,
         'paylink' => $paylink,
 //        'coupons' => check_stripe_coupon('test'),
     ), JSON_UNESCAPED_UNICODE);
@@ -229,6 +238,9 @@ function handle_stripe_webhook() {
         $location_end = $event_json->data->object->metadata->location_end;
         $booking_id = $event_json->data->object->metadata->booking_id;
         $flight_number = $event_json->data->object->metadata->flight_number;
+        $agree = $event_json->data->object->metadata->agree;
+        $date_of_birth = $event_json->data->object->metadata->date_of_birth;
+        $options = $event_json->data->object->metadata->options;
 
 
 
@@ -277,6 +289,12 @@ function handle_stripe_webhook() {
         carbon_set_post_meta( $post_id, 'flight_number', $flight_number);
         carbon_set_post_meta( $post_id, 'receipt_url', $receipt_url);
 
+        carbon_set_post_meta( $post_id, 'options', $options);
+        log_telegram($options);
+
+        carbon_set_post_meta( $post_id, 'agree', $agree);
+        carbon_set_post_meta( $post_id, 'date_of_birth', $date_of_birth);
+
         $booking = create_booking($post_id);
 
         $payment = create_payment($booking['booking']['id'], (int) $amount / 100);
@@ -312,7 +330,25 @@ function create_booking($booking_post_id) {
         'price' => (int) carbon_get_post_meta($id, 'amount') / 100,
         'receipt_url' => carbon_get_post_meta($id, 'receipt_url'),
         'flight_number' => carbon_get_post_meta($id, 'flight_number'),
+        'options' => carbon_get_post_meta($id, 'options'),
+        'date_of_birth' => carbon_get_post_meta($id, 'date_of_birth'),
+        'agree' => carbon_get_post_meta($id, 'agree'),
     );
+
+    $description = "Receipt: {$booking['receipt_url']};";
+    if (!empty($booking['flight_number'])) {
+        $description.= "\n\n{$booking['flight_number']};";
+    }
+    if (!empty($booking['agree'])) {
+        $description.= "Is Agree: \n\n{$booking['agree']};";
+    }
+    if (!empty($booking['date_of_birth'])) {
+        $description.= "Date of birth: \n\n{$booking['date_of_birth']};";
+    }
+    if (!empty($booking['options'])) {
+        $description.= " \n\n{$booking['options']};";
+    }
+
 
     $data_url = 'https://rentprog.pro/api/v1/public/create_booking';
     $headers = [
@@ -344,8 +380,8 @@ function create_booking($booking_post_id) {
         "address" => "",
 
 //        "description" => "",
-        "description" => "Receipt: {$booking['receipt_url']}. \n\n{$booking['flight_number']}",
-        "days" => $booking['days']
+        "description" => $description,
+        "days" => $booking['days'],
     );
 
     $data_response = wp_remote_post($data_url, [
