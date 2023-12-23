@@ -290,7 +290,6 @@ function handle_stripe_webhook() {
         carbon_set_post_meta( $post_id, 'receipt_url', $receipt_url);
 
         carbon_set_post_meta( $post_id, 'options', $options);
-        log_telegram($options);
 
         carbon_set_post_meta( $post_id, 'agree', $agree);
         carbon_set_post_meta( $post_id, 'date_of_birth', $date_of_birth);
@@ -300,11 +299,100 @@ function handle_stripe_webhook() {
         $payment = create_payment($booking['booking']['id'], (int) $amount / 100);
 
         carbon_set_post_meta( $post_id, 'crm_booking_id', $payment['ids']);
+
+        carbon_set_post_meta( $post_id, 'crm_booking_id', $booking['booking']['id']);
+
+        $gallery = carbon_get_post_meta($product_id, 'photos');
+        $car_thumb = '';
+        if (!empty($gallery)) {
+            $car_thumb = get_image_url_by_id($gallery[0]);
+        }
+        send_email_booking(array(
+            'name' => $name,
+            'date_of_birth' => $date_of_birth,
+            'email' => $email,
+            'phone' => $phone,
+//            'crm_booking_id' => $payment['ids'][0],
+            'crm_booking_id' => $booking['booking']['id'],
+            'location_start' => $location_start,
+            'date_start' => $date_start,
+            'date_end' => $date_end,
+            'flight_number' => $flight_number,
+            'receipt_url' => $receipt_url,
+            'options' => $options,
+            'car_name' => carbon_get_post_meta($product_id, 'car_name'),
+            'car_thumb'=> $car_thumb,
+        ));
     }
 
     // Отправьте ответ, чтобы подтвердить успешное получение данных
     status_header(200);
     die();
+}
+
+function replacePostKey($key) {
+    $keys = array(
+        'name' => pll__('Name', 'crrt'),
+        'email' => pll__('Email', 'crrt'),
+        'phone' => pll__('Phone', 'crrt'),
+        'flight_number' => pll__('Flight number', 'crrt'),
+        'receipt_url' => pll__('Receipt', 'crrt'),
+        'options' => pll__('Options', 'crrt'),
+        'date_of_birth' => pll__('Date of birth', 'crrt'),
+    );
+
+
+    return isset($keys[$key]) ? $keys[$key] : $key;
+}
+
+function sortArrayByKeyNames($keyNames, $arrayToSort) {
+    $sortedArray = array();
+    foreach ($keyNames as $keyName) {
+        if (array_key_exists($keyName, $arrayToSort)) {
+            $sortedArray[$keyName] = $arrayToSort[$keyName];
+            unset($arrayToSort[$keyName]);
+        }
+    }
+    return array_merge($sortedArray, $arrayToSort);
+}
+
+function send_email_booking($data) {
+    $to = $data['email'];
+    $subject = "#{$data['crm_booking_id']} {$data['car_name']}: {$data['date_start']} - {$data['date_end']}"; // Тема письма
+
+    $message = '<html><body>';
+    $message .= pll__('Your Car booking: ', 'crrt') . " {$data['crm_booking_id']}" . '<br>';
+    $message .= '<img src="'.$data['car_thumb'].'" style="width: 100%;"/>';
+    $message .= '<h3>'. pll__('Start', 'crrt') . '</h3>';
+    $message .= '<p>'. $data['location_start'] . '</p>';
+    $message .= '<p>'. $data['date_start'] . '</p><br>';
+
+    $message .= '<h3>'. pll__('End', 'crrt') . '</h3>';
+    $message .= '<p>'. $data['location_start'] . '</p>';
+    $message .= '<p>'. $data['date_end'] . '</p><br>';
+
+    $IGNORE_KEYS = array(
+        'user_file',
+        'date_start',
+        'date_end',
+        'location_start',
+        'crm_booking_id',
+        'car_name',
+        'car_thumb',
+    );
+    foreach ($data as $key => $value) {
+        if (in_array($key, $IGNORE_KEYS)) continue;
+        if (empty($value)) continue;
+        $message .= '<p><strong>' . replacePostKey($key) . ':</strong> ' . $value . '</p>';
+    }
+    $message .= '</body></html>';
+
+    $headers = array(
+        'Content-Type: text/html; charset=UTF-8', // Установка заголовка для HTML-сообщения
+    );
+
+    // Отправка письма
+    $result = wp_mail($to, $subject, $message, $headers);
 }
 
 function create_booking($booking_post_id) {
