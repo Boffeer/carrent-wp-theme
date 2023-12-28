@@ -43,7 +43,14 @@ Container::make('theme_options', 'theme_settings',  'Theme settings')
             ->set_width(50),
         Field::make('text', 'test_stripe_secret_key', 'Test Stripe Secret Key')
             ->set_width(50),
-    ))
+
+        Field::make('text', 'coupon_sheets_form_id', 'Google Form: Form ID (form url)')
+            ->set_width(33),
+        Field::make('text', 'coupon_sheets_partial_response', 'Google Form: Partial Response (form source code)')
+            ->set_width(33),
+        Field::make('text', 'coupon_sheets_fbzx', 'Google Form: FBZX (form source code)')
+            ->set_width(33),
+))
 
 	->add_tab('Contacts', array(
 		Field::make('textarea', 'phones', 'Phones')

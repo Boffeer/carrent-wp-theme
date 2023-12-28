@@ -97,7 +97,6 @@ get_header();
                             <p class="blog-card__desc">
                                 <?php echo $booking_info['location_start']; ?> <br>
                                 <?php echo $booking_info['date_start']; ?> <br>
-                                <?php echo $booking_info['time_start']; ?>
                             </p>
 
                             <h3 class="blog-card__title">
@@ -106,8 +105,9 @@ get_header();
                             <p class="blog-card__desc">
                                 <?php echo !empty($booking_info['location_end']) ? $booking_info['location_end'] : $booking_info['location_start'] ?> <br>
                                 <?php echo $booking_info['date_end']; ?> <br>
-                                <?php echo $booking_info['time_end']; ?>
                             </p>
+                            <br>
+                            <p class="blog-card__desc">Email sent. Check spam.</p>
 
                             <?php /*
                             <h3 class="blog-card__title">

@@ -323,6 +323,29 @@ function handle_stripe_webhook() {
             'car_name' => carbon_get_post_meta($product_id, 'car_name'),
             'car_thumb'=> $car_thumb,
         ));
+    } elseif ($event_json->type === 'customer.discount.created') {
+        $coupon = $event_json->data->object->coupon;
+
+
+        $checkout_session_id = $event_json->data->object->checkout_session;
+        $checkout = get_stripe_checkout($checkout_session_id);
+        $payment_intent_id = $checkout['payment_intent'];
+        $payment_intent = get_stripe_payment_intend($payment_intent_id);
+
+        $metadata = $payment_intent['metadata'];
+
+        $table_data = array(
+            'pi_id' => $payment_intent['id'],
+            'coupon_name' => $coupon->name,
+            'percent_off' => $coupon->percent_off,
+            'amount' => $payment_intent['amount'] / 100,
+            'user_phone' => $metadata['user_phone'],
+            'user_email' => $checkout['customer_details']['email'],
+            'user_name' => $checkout['customer_details']['name'],
+        );
+
+
+        send_promocode_sheet($table_data);
     }
 
     // Отправьте ответ, чтобы подтвердить успешное получение данных
@@ -652,4 +675,126 @@ function check_stripe_coupon($couponCode)
     } else {
         return json_decode($response);
     }
+}
+
+function get_stripe_discount() {
+    $secret = get_stripe_secret();
+//    $data_url = 'https://api.stripe.com/v1/events?type=customer.discount.created&limit=100';
+//    $data_url = 'https://api.stripe.com/v1/events';
+    $data_url = 'https://api.stripe.com/v1/payment_intents';
+
+    $headers = array(
+        'Authorization' => 'Bearer ' . $secret,
+    );
+
+    $data_response = wp_remote_get($data_url, array('headers' => $headers));
+
+    if (is_wp_error($data_response)) {
+        $error_message = $data_response->get_error_message();
+//        log_telegram('Error Message: ' . $error_message);
+        return $error_message;
+    } else {
+        $data_body = wp_remote_retrieve_body($data_response);
+        if (empty($data_body)) {
+//            log_telegram('Empty response body.');
+        } else {
+//            log_telegram('Response Body: ' . $data_body);
+            $data = json_decode($data_body, true);
+            return $data;
+        }
+    }
+}
+
+function get_stripe_checkout($id) {
+    $secret = get_stripe_secret();
+    $data_url = "https://api.stripe.com/v1/checkout/sessions/{$id}";
+
+    $headers = array(
+        'Authorization' => 'Bearer ' . $secret,
+    );
+
+    $data_response = wp_remote_get($data_url, array('headers' => $headers));
+
+    if (is_wp_error($data_response)) {
+        $error_message = $data_response->get_error_message();
+//        log_telegram('Error Message: ' . $error_message);
+        return $error_message;
+    } else {
+        $data_body = wp_remote_retrieve_body($data_response);
+        if (empty($data_body)) {
+//            log_telegram('Empty response body.');
+        } else {
+//            log_telegram('Response Body: ' . $data_body);
+            $data = json_decode($data_body, true);
+            return $data;
+        }
+    }
+}
+function get_stripe_payment_intend($id) {
+    $secret = get_stripe_secret();
+    $data_url = "https://api.stripe.com/v1/payment_intents/{$id}";
+
+    $headers = array(
+        'Authorization' => 'Bearer ' . $secret,
+    );
+
+    $data_response = wp_remote_get($data_url, array('headers' => $headers));
+
+    if (is_wp_error($data_response)) {
+        $error_message = $data_response->get_error_message();
+//        log_telegram('Error Message: ' . $error_message);
+        return $error_message;
+    } else {
+        $data_body = wp_remote_retrieve_body($data_response);
+        if (empty($data_body)) {
+//            log_telegram('Empty response body.');
+        } else {
+//            log_telegram('Response Body: ' . $data_body);
+            $data = json_decode($data_body, true);
+            return $data;
+        }
+    }
+}
+
+function send_promocode_sheet($data) {
+    $form_id = carbon_get_theme_option('coupon_sheets_form_id');
+    $partial_response = carbon_get_theme_option('coupon_sheets_partial_response');
+    $fbzx = carbon_get_theme_option('coupon_sheets_fbzx');
+
+    if (empty($form_id) || empty($partial_response) || empty($fbzx)) return;
+
+//    $url = "https://docs.google.com/forms/d/e/{$form_id}/formResponse";
+    $url = "https://docs.google.com/forms/u/0/d/e/{$form_id}/formResponse";
+
+
+    $post_data = array (
+        "entry.189357892" =>  $data['pi_id'],
+        "entry.1681842955" => $data['coupon_name'],
+        "entry.1689304715" => $data['percent_off'],
+        "entry.558131768" =>  $data['amount'],
+        "entry.1400895144" => $data['user_phone'],
+        "entry.1124245593" => $data['user_email'],
+        "entry.768094752" =>  $data['user_name'],
+//        'draftResponse' => $partial_response,
+        'partialResponse' => $partial_response,
+        "pageHistory" => "0",
+        "fbzx" => $fbzx,
+        "fvv" => "1",
+    );
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+
+    $response = curl_exec($ch);
+
+    if (curl_errno($ch)) {
+//        log_telegram('Ошибка cURL: ' . curl_error($ch));
+    } else {
+//        log_telegram('Данные успешно отправлены в Google Forms!');
+    }
+
+    curl_close($ch);
 }
