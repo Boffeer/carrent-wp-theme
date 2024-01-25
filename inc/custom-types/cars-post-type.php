@@ -113,6 +113,8 @@ function register_cars_fields() {
             Field::make( 'text', 'heated_windshield', __( 'Heated windshield' ) ),
             Field::make( 'text', 'rain_sensor', __( 'Rain sensor' ) ),
 
+            Field::make( 'text', 'franchise', __( 'Franchise' ) ),
+
         Field::make( 'text', 'prices', __( 'Prices' ) ),
         /*
             {

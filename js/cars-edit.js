@@ -41,6 +41,12 @@ window.addEventListener("DOMContentLoaded", (event) => {
           const field= getField(stat.key);
           if (!field) return;
 
+          if (field.value) {
+            const fieldLabel = field.closest('.cf-field').querySelector('.cf-field__label');
+            fieldLabel.innerHTML += `, <span style="font-weight: normal;">previous value - <span style="user-select: all; color: var(--wp--preset--color--vivid-cyan-blue)">${field.value}</span></span>`;
+            return;
+          }
+
           if (stat.key === 'prices') {
             // console.log(stat.value)
             stat.value = stat.value[0].values.map(price => price).join(',');
