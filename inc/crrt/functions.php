@@ -5,176 +5,372 @@
 
 //require_once THEME_INC . '/stripe-php/init.php';
 
+class Order
+{
+    private $user_phone;
+    private $user_email;
+    private $car_post_id;
+    private $car_crm_id;
+    private $options;
+
+    private $date_start;
+    private $date_end;
+    private $location_start;
+    private $location_end;
+    private $flight_number;
+
+    private $cancel_page;
+    private $currency;
+    private $agree;
+    private $date_of_birth;
+
+    public function __construct($post_data) {
+        $this->car_post_id = $post_data['post_id'];
+        $car_crm_id = carbon_get_post_meta($this->car_post_id, 'rentprog_id');
+        $this->date_start = $post_data['date_start'] . ' ' . $post_data['time_start'];
+
+        $this->date_end = $post_data['date_end'] . ' ' . $post_data['time_end'];
+        if (empty($this->date_end)) {
+            $this->date_end = $this->date_start;
+        }
+
+        $this->user_phone = $post_data['user_phone'];
+        $this->user_email = $post_data['user_email'];
+
+        $this->location_start = $post_data['location_start'] ?? '';
+        $this->location_end = $post_data['location_end'] ?? $post_data['location_start'];
+
+        $this->flight_number = empty($post_data['flight_number']) ? '' . $post_data['flight_number'] : '';
+        $this->cancel_page = $post_data['cancel_page'];
+
+        $this->currency = $this->getCurrencyCode(carbon_get_theme_option('currency'));
+
+        $this->setOptions($post_data['options']);
+
+        $this->agree = $post_data['agree'];
+        $this->date_of_birth = $post_data['dob'];
+    }
+
+    public function getDates(): array
+    {
+        return array(
+            'start' => $this->date_start,
+            'end' => $this->date_end,
+        );
+    }
+
+    public function getCurrencyCode($currencyAbstract): string
+    {
+        $currencies = array(
+            'eur' => 'eur',
+            '€' => 'eur',
+            'usd' => 'usd',
+            '$' => 'usd',
+        );
+
+        return $currencies[$currencyAbstract];
+    }
+    public function getCurrency(): string
+    {
+        return $this->currency;
+    }
+
+    public function getCarId(): string
+    {
+        return $this->car_post_id;
+    }
+
+    public function getCar(): array
+    {
+        $crm_id = carbon_get_post_meta($this->car_post_id, 'rentprog_id');
+        $name = carbon_get_post_meta($this->car_post_id, 'car_name');
+        $prices = explode(',', carbon_get_post_meta($this->car_post_id, 'prices'));
+        $images = [get_image_url_by_id(carbon_get_post_meta($this->car_post_id, 'photos')[0])];
+
+        $price = get_price_per_day($prices, $this->date_start, $this->date_end);
+
+        $product = array(
+            'name' => "{$name} (" . count($price['range']) . " days)",
+            'price' => $price['total'] * 100,
+            'images' => $images,
+            'description' => '',
+        );
+
+        if ($this->location_start) {
+            $product['description'] .= "{$this->location_start}, ";
+        }
+
+        $product['description'] .= "{$this->date_start} - {$this->date_end} ";
+
+        /*
+        if ($this->options_string) {
+            $product['description'] .= $this->options_string;
+        }
+        if ($this->date_of_birth) {
+            $product['description'] .= $this->date_of_birth;
+        }
+        if ($this->agree) {
+            $product['description'] .= $this->agree;
+        }
+        */
+
+        return $product;
+    }
+
+    public function getCarProduct(): array
+    {
+        $product = $this->getCar();
+        return array(
+            'price_data' => [
+                'currency' => $this->getCurrency(),
+                'product_data' => [
+                    'name' => $product['name'],
+                    'images' => $product['images'],
+                    'description' => $product['description'],
+                ],
+                'unit_amount' => $product['price'], // Amount in cents (e.g., $19.99)
+            ],
+            'quantity' => 1,
+        );
+    }
+
+    public function setOptions($post_options) {
+
+        /*
+         * array(
+         *      array(
+         *          name => string,
+         *          prices => csv
+         *      )
+         * )
+         */
+        $available_options = carbon_get_post_meta($this->car_post_id, 'car_options');
+        $selected_options_names = explode(',', $post_options);
+
+        $selected_options = array();
+
+        foreach ($available_options as $available_option) {
+            if (!in_array($available_option['name'], $selected_options_names)) continue;
+
+            $selected_option_prices = explode(',', $available_option['prices']);
+            $current_option = get_price_per_day($selected_option_prices, $this->date_start, $this->date_end);
+            $current_option['name'] = $available_option['name'];
+            $selected_options[] = $current_option;
+        }
+
+        $this->options = $selected_options;
+    }
+    public function getOptions() {
+        return $this->options;
+    }
+
+    public function getOptionsText(): string
+    {
+        $options_strings = [];
+        foreach ($this->getOptions() as $option) {
+            $options_string[] = "{$option['name']} {$option['total']}{$this->getCurrency()}";
+        }
+        return implode(', ', $options_strings);
+    }
+
+    public function getOptionsProducts(): array
+    {
+        $cart_options = array();
+        foreach ($this->getOptions() as $option) {
+            $cart_options[] = [
+                'price_data' => [
+                    'currency' => $this->getCurrency(),
+                    'product_data' => [
+                        'name' => $option['name'],
+                    ],
+                'unit_amount' => $option['total'] * 100, // Amount in cents (e.g., $19.99)
+            ],
+            'quantity' => 1,
+            ];
+        }
+
+        return $cart_options;
+    }
+
+    public function getUser(): array
+    {
+        return array(
+            'phone' => $this->user_phone,
+            'email' => $this->user_email,
+        );
+    }
+
+    public function getLocations(): array
+    {
+        return array(
+            'start' => $this->location_start,
+            'end' => $this->location_end
+        );
+    }
+
+    public function getFlightNumber(): string
+    {
+        return $this->flight_number;
+    }
+
+    public function getCancelPage(): string
+    {
+        return $this->cancel_page;
+    }
+
+    public function getMetaData($bookingId): array
+    {
+        return array(
+            'user_phone' => $this->user_phone,
+            'product_id' => $this->car_post_id,
+            'booking_id' => $bookingId,
+            'date_start' => $this->date_start,
+            'date_end' => $this->date_end,
+//            'time_start' => $time_start,
+//            'time_end' => $time_end,
+            'location_start' => $this->location_start,
+            'location_end' => $this->location_end,
+            'flight_number' => $this->flight_number,
+            'options' => $this->getOptionsText(),
+            'agree' => $this->agree,
+            'date_of_birth' => $this->date_of_birth,
+        );
+    }
+}
+
+class Booking
+{
+    private $booking_post_id;
+
+    public function __construct(Order $order) {
+        $user = $order->getUser();
+        $title = "Пользователь начал бронирование {$user['phone']} - {$user['email']}";
+
+        $post_data = array(
+            'post_title' => $title, // Заголовок вашего кастомного поста
+            'post_content' => '',
+            'post_status' => 'publish',
+            'post_type' => 'car_booking', // Тип вашего кастомного поста
+        );
+
+        $this->booking_post_id = wp_insert_post($post_data);
+
+        carbon_set_post_meta( $this->booking_post_id, 'phone', $user['phone']);
+        carbon_set_post_meta( $this->booking_post_id, 'email', $user['email']);
+    }
+
+    public function getBookingPostId() {
+        return $this->booking_post_id;
+    }
+
+    public function makeBooking() {
+        $this->booking_post_id;
+        return false;
+
+        // Создайте кастомный пост
+
+
+        // Выполните другие действия, если необходимо
+        carbon_set_post_meta( $post_id, 'name', $name);
+        carbon_set_post_meta( $post_id, 'created', $created);
+        carbon_set_post_meta( $post_id, 'amount', $amount);
+        carbon_set_post_meta( $post_id, 'id', $event_id);
+        carbon_set_post_meta( $post_id, 'json', json_encode($event_json));
+        carbon_set_post_meta( $post_id, 'product_id', $product_id);
+        carbon_set_post_meta( $post_id, 'payment_intent', $payment_intent);
+        carbon_set_post_meta( $post_id, 'booking_id', $booking_id);
+
+        carbon_set_post_meta( $post_id, 'date_start', $date_start);
+        carbon_set_post_meta( $post_id, 'date_end', $date_end);
+        carbon_set_post_meta( $post_id, 'time_start', $time_start);
+        carbon_set_post_meta( $post_id, 'time_end', $time_end);
+        carbon_set_post_meta( $post_id, 'location_start', $location_start);
+        carbon_set_post_meta( $post_id, 'location_end', $location_end);
+        carbon_set_post_meta( $post_id, 'flight_number', $flight_number);
+        carbon_set_post_meta( $post_id, 'receipt_url', $receipt_url);
+
+        carbon_set_post_meta( $post_id, 'options', $options);
+
+        carbon_set_post_meta( $post_id, 'agree', $agree);
+        carbon_set_post_meta( $post_id, 'date_of_birth', $date_of_birth);
+
+        $booking = create_booking($post_id);
+
+        $payment = create_payment($booking['booking']['id'], (int) $amount / 100);
+
+        carbon_set_post_meta( $post_id, 'crm_booking_id', $payment['ids']);
+
+        carbon_set_post_meta( $post_id, 'crm_booking_id', $booking['booking']['id']);
+    }
+}
+
+class Stripe
+{
+    public static function getSecret() {
+        $key_type = carbon_get_theme_option('stripe_key_type');
+        if ($key_type === 'prod') {
+            $key_type = '';
+        } else {
+            $key_type.= '_';
+        }
+        return carbon_get_theme_option($key_type.'stripe_secret_key');;
+    }
+
+    public static function getPayLink(Order $order, Booking $booking) {
+        $domain = $_SERVER['SERVER_NAME'];
+        $booking_id = $booking->getBookingPostId();
+        $user = $order->getUser();
+
+        $stripe_api_url = 'https://api.stripe.com/v1/checkout/sessions';
+
+        $line_items = array_merge([$order->getCarProduct()], $order->getOptionsProducts());
+
+        $headers = array(
+            'Authorization: Bearer ' . self::getSecret(),
+            'Content-Type: application/x-www-form-urlencoded',
+        );
+
+        $data = [
+            'payment_method_types' => ['card'],
+            'line_items' => $line_items,
+            'mode' => 'payment',
+            'success_url' => "https://{$domain}/success?car_booking_id={$booking_id}",
+            'cancel_url' => $order->getCancelPage(),
+            'payment_intent_data' => [
+                'metadata' => $order->getMetaData($booking_id),
+            ],
+            'metadata' => $order->getMetaData($booking_id),
+            'allow_promotion_codes' => 'true', // Enable promotion codes
+            'customer_email' => $user['email'],
+            'client_reference_id' => $user['phone'],
+        ];
+
+        $post_data = http_build_query($data);
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $stripe_api_url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($ch);
+
+        curl_close($ch);
+
+        $session_data = json_decode($response, true);
+        return $session_data['url'];
+    }
+}
+
+
 add_action('wp_ajax_get_stripe_paylink', 'get_stripe_paylink');
 add_action('wp_ajax_nopriv_get_stripe_paylink', 'get_stripe_paylink');
 function get_stripe_paylink()
 {
-    $post_id = $_POST['post_id'];
-    $date_start = $_POST['date_start'];
-    $date_end = $_POST['date_end'];
-    $time_start = $_POST['time_start'];
-    $time_end = $_POST['time_end'];
-
-    $date_start = $date_start . ' ' . $time_start;
-    $date_end = $date_end . ' ' . $time_end;
-    if (empty($date_end)) {
-        $date_end = $date_start;
-    }
-
-    $user_phone = $_POST['user_phone'];
-    $user_email = $_POST['user_email'];
-
-    $location_start = isset($_POST['location_start']) ? $_POST['location_start'] : '';
-    $location_end = isset($_POST['location_end']) ? $_POST['location_end'] : $_POST['location_start'];
-
-    $flight_number = empty($_POST['flight_number']) ? '' . $_POST['flight_number'] : '';
-    $cancel_page = $_POST['cancel_page'];
-
-    $car = array(
-        'crm_id' => carbon_get_post_meta($post_id, 'rentprog_id'),
-        'name' => carbon_get_post_meta($post_id, 'car_name'),
-        'prices' => explode(',', carbon_get_post_meta($post_id, 'prices')),
-        'image' => get_image_url_by_id(carbon_get_post_meta($post_id, 'photos')[0]),
-    );
-
-    $car['price'] = get_price_per_day($car['prices'], $date_start, $date_end);
-    unset($car['prices']);
-
-
-    $options_to_count = array();
-    $options_list = carbon_get_post_meta($post_id, 'car_options');
-    $active_options = explode(',', $_POST['options']);
-    foreach ($active_options as $option) {
-        foreach ($options_list as $option_info) {
-            if ($option_info['name'] === $option) {
-                $option_prices = explode(',', $option_info['prices']);
-                $current_option = get_price_per_day($option_prices, $date_start, $date_end);
-                $current_option['name'] = $option;
-                $options_to_count[] = $current_option;
-            }
-        }
-    }
-
-    $currencies = array(
-        'eur' => 'eur',
-        '€' => 'eur',
-        'usd' => 'usd',
-        '$' => 'usd',
-    );
-    $currency = $currencies[carbon_get_theme_option('currency')];
-
-    $options_strings = [];
-    foreach ($options_to_count as $option) {
-        $name = $option['name'];
-        $total = $option['total'];
-        $options_strings[] = "$name: $total{$currency}";
-    }
-    $options_string = implode(', ', $options_strings);
-
-    $agree = $_POST['agree'];
-    $date_of_birth = $_POST['dob'];
-
-    $product_info = array(
-        'name' => "{$car['name']} (" . count($car['price']['range']) . " days)",
-        'price' => $car['price']['total'] * 100,
-        'image' => $car['image'],
-        'description' => "{$location_start}, {$date_start} - {$date_end}, {$options_string}, date of birth: {$date_of_birth}, Agreement: {$agree}",
-    );
-    $booking_id = uniqid();
-
-    $domain = $_SERVER['SERVER_NAME'];
-
-    $stripe_api_url = 'https://api.stripe.com/v1/checkout/sessions';
-    $stripe_secret_key = get_stripe_secret();
-
-    $line_items = array(
-        [
-            'price_data' => [
-                'currency' => $currency,
-                'product_data' => [
-                    'name' => $product_info['name'],
-                    'images' => [$product_info['image']],
-                    'description' => $product_info['description'],
-                ],
-                'unit_amount' => $product_info['price'], // Amount in cents (e.g., $19.99)
-            ],
-            'quantity' => 1,
-        ],
-    );
-    foreach ($options_to_count as $option) {
-        $line_items[] = [
-            'price_data' => [
-                'currency' => $currency,
-                'product_data' => [
-                    'name' => $option['name'],
-                ],
-                'unit_amount' => $option['total'] * 100, // Amount in cents (e.g., $19.99)
-            ],
-            'quantity' => 1,
-        ];
-    }
-
-    // Set your Stripe secret key
-    $headers = [
-        'Authorization: Bearer ' . $stripe_secret_key,
-        'Content-Type: application/x-www-form-urlencoded',
-    ];
-    $data = [
-        'payment_method_types' => ['card'],
-        'line_items' => $line_items,
-        'mode' => 'payment',
-        'success_url' => "https://{$domain}/success?car_booking_id={$booking_id}",
-        'cancel_url' => $cancel_page,
-//        'cancel_url' => "https://{$domain}",
-        'payment_intent_data' => [
-            'metadata' => [
-                'user_phone' => $user_phone,
-                'product_id' => $post_id,
-                'booking_id' => $booking_id,
-                'date_start' => $date_start,
-                'date_end' => $date_end,
-                'time_start' => $time_start,
-                'time_end' => $time_end,
-                'location_start' => $location_start,
-                'location_end' => $location_end,
-                'flight_number' => $flight_number,
-                'options' => $options_string,
-                'agree' => $agree,
-                'date_of_birth' => $date_of_birth,
-            ],
-        ],
-//        'discounts' => [['coupon' => 'shit']],
-        'allow_promotion_codes' => 'true', // Enable promotion codes
-        'customer_email' => $user_email,
-        'client_reference_id' => $user_phone,
-    ];
-    // Convert the payload to a URL-encoded string
-    $post_data = http_build_query($data);
-
-    // Initialize cURL session
-    $ch = curl_init();
-    // Set cURL options
-    curl_setopt($ch, CURLOPT_URL, $stripe_api_url);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    // Execute cURL session
-    $response = curl_exec($ch);
-
-    // Close cURL session
-    curl_close($ch);
-
-    // Decode the response JSON
-    $session_data = json_decode($response, true);
-    $paylink = $session_data['url'];
+    $order = new Order($_POST);
+    $booking = new Booking($order);
 
     echo json_encode(array(
-//        'session_data' => $session_data,
-//        'car' => $car,
-//        'options' => $options_to_count,
-        'paylink' => $paylink,
-//        'coupons' => check_stripe_coupon('test'),
+        'paylink' => Stripe::getPayLink($order, $booking),
     ), JSON_UNESCAPED_UNICODE);
     wp_die();
 }
