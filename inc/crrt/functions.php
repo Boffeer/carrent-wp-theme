@@ -168,7 +168,7 @@ class Order
     {
         $options_strings = [];
         foreach ($this->getOptions() as $option) {
-            $options_string[] = "{$option['name']} {$option['total']}{$this->getCurrency()}";
+            $options_strings[] = "{$option['name']} {$option['total']}{$this->getCurrency()}";
         }
         return implode(', ', $options_strings);
     }
@@ -218,22 +218,33 @@ class Order
         return $this->cancel_page;
     }
 
+    public function getAgree() {
+        return $this->agree;
+    }
+    public function getDateOfBirth() {
+        return $this->date_of_birth;
+    }
+
     public function getMetaData($bookingId): array
     {
+        $user = $this->getUser();
+        $dates = $this->getDates();
+        $locations = $this->getLocations();
         return array(
-            'user_phone' => $this->user_phone,
-            'product_id' => $this->car_post_id,
+            'user_phone' => $user['phone'],
+            'user_email' => $user['email'],
+            'product_id' => $this->getCarId(),
             'booking_id' => $bookingId,
-            'date_start' => $this->date_start,
-            'date_end' => $this->date_end,
+            'date_start' => $dates['start'],
+            'date_end' => $dates['end'],
 //            'time_start' => $time_start,
 //            'time_end' => $time_end,
-            'location_start' => $this->location_start,
-            'location_end' => $this->location_end,
-            'flight_number' => $this->flight_number,
+            'location_start' => $locations['start'],
+            'location_end' => $locations['end'],
+            'flight_number' => $this->getFlightNumber(),
             'options' => $this->getOptionsText(),
-            'agree' => $this->agree,
-            'date_of_birth' => $this->date_of_birth,
+            'agree' => $this->getAgree(),
+            'date_of_birth' => $this->getDateOfBirth(),
         );
     }
 }
@@ -241,11 +252,11 @@ class Order
 class Booking
 {
     private $booking_post_id;
+    private $paymentSessionId;
 
     public function __construct(Order $order) {
         $user = $order->getUser();
         $title = "Пользователь начал бронирование {$user['phone']} - {$user['email']}";
-
         $post_data = array(
             'post_title' => $title, // Заголовок вашего кастомного поста
             'post_content' => '',
@@ -254,21 +265,59 @@ class Booking
         );
 
         $this->booking_post_id = wp_insert_post($post_data);
-
+        carbon_set_post_meta( $this->booking_post_id, 'booking_id', $this->booking_post_id);
         carbon_set_post_meta( $this->booking_post_id, 'phone', $user['phone']);
         carbon_set_post_meta( $this->booking_post_id, 'email', $user['email']);
+
+        $locations = $order->getLocations();
+        carbon_set_post_meta( $this->booking_post_id, 'location_start', $locations['start']);
+        carbon_set_post_meta( $this->booking_post_id, 'location_end', $locations['end']);
+
+        $dates = $order->getDates();
+        carbon_set_post_meta( $this->booking_post_id, 'date_start', $dates['start']);
+        carbon_set_post_meta( $this->booking_post_id, 'date_end', $dates['end']);
+
+        carbon_set_post_meta( $this->booking_post_id, 'product_id', $order->getCarId());
+        carbon_set_post_meta( $this->booking_post_id, 'flight_number', $order->getFlightNumber());
+        carbon_set_post_meta( $this->booking_post_id, 'options', $order->getOptionsText());
+
+        carbon_set_post_meta( $this->booking_post_id, 'agree', $order->getAgree());
+        carbon_set_post_meta( $this->booking_post_id, 'date_of_birth', $order->getDateOfBirth());
+    }
+
+    public static function getBookingPostByCheckoutSessionId($session_id) {
+        $args = array(
+            'post_type' => 'car_booking',
+            'meta_query' => array(
+                array(
+                    'key' => 'payment_session_id',
+                    'value' => $session_id,
+                    'compare' => '='
+                )
+            )
+        );
+
+        $post_id = null;
+        $posts = get_posts($args);
+        if ($posts) {
+            foreach ($posts as $post) {
+                // Ваши действия с найденной записью
+                $post_id = $post->ID;
+                // ...
+            }
+        }
+
+        return $post_id;
     }
 
     public function getBookingPostId() {
         return $this->booking_post_id;
     }
 
-    public function makeBooking() {
-        $this->booking_post_id;
-        return false;
-
-        // Создайте кастомный пост
-
+    public function setPaymentSessionId($id) {
+           $this->paymentSessionId = $id;
+           carbon_set_post_meta( $this->booking_post_id, 'payment_session_id', $id);
+    }
 
         // Выполните другие действия, если необходимо
         carbon_set_post_meta( $post_id, 'name', $name);
@@ -299,7 +348,6 @@ class Booking
         $payment = create_payment($booking['booking']['id'], (int) $amount / 100);
 
         carbon_set_post_meta( $post_id, 'crm_booking_id', $payment['ids']);
-
         carbon_set_post_meta( $post_id, 'crm_booking_id', $booking['booking']['id']);
     }
 }
@@ -356,8 +404,8 @@ class Stripe
 
         curl_close($ch);
 
-        $session_data = json_decode($response, true);
-        return $session_data['url'];
+        return json_decode($response, true);
+//        return $session_data['url'];
     }
 }
 
@@ -368,9 +416,15 @@ function get_stripe_paylink()
 {
     $order = new Order($_POST);
     $booking = new Booking($order);
+    $payLinkSession = Stripe::getPayLink($order, $booking);
+
+    $booking->setPaymentSessionId($payLinkSession['id']);
+//    $booking->setInitialMetaData($order);
+    log_telegram(json_encode($order->getMetaData($booking->getBookingPostId())));
 
     echo json_encode(array(
-        'paylink' => Stripe::getPayLink($order, $booking),
+//        'session' => $payLinkSession,
+        'paylink' => $payLinkSession['url'],
     ), JSON_UNESCAPED_UNICODE);
     wp_die();
 }

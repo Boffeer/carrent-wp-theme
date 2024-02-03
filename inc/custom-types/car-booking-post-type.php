@@ -44,21 +44,12 @@ function register_car_booking_post_types() {
 
 add_action('carbon_fields_register_fields', 'register_car_booking_fields');
 function register_car_booking_fields() {
-	Container::make('post_meta', 'car_booking_info', 'Контакт')
+	Container::make('post_meta', 'car_booking_info', __('Booking'))
 		->where('post_type', '=', 'car_booking')
-		->add_fields(array(
+        ->add_tab(__('Order'), array(
             Field::make('text', 'name', 'name'),
             Field::make('text', 'phone', 'phone'),
             Field::make('text', 'email', 'email'),
-            Field::make('text', 'id', 'id'),
-            Field::make('text', 'amount', 'amount (cents)'),
-            Field::make('text', 'created', 'created'),
-            Field::make('textarea', 'json', 'json'),
-
-            Field::make('text', 'product_id', 'product_id'),
-            Field::make('text', 'payment_intent', 'payment_intent'),
-            Field::make('text', 'booking_id', 'booking_id'),
-            Field::make('text', 'crm_booking_id', 'crm_booking_id'),
             Field::make('text', 'date_start', 'date_start')
                 ->set_width(50),
             Field::make('text', 'date_end', 'date_end')
@@ -72,10 +63,21 @@ function register_car_booking_fields() {
             Field::make('text', 'location_end', 'location_end')
                 ->set_width(50),
             Field::make('text', 'flight_number', 'flight_number'),
-            Field::make('text', 'receipt_url', 'receipt_url'),
+            Field::make('text', 'amount', 'amount (cents)'),
+            Field::make('text', 'created', 'created'),
+            Field::make('text', 'crm_booking_id', 'crm_booking_id'),
+            Field::make('text', 'product_id', 'product_id'),
+            Field::make('text', 'booking_id', 'booking_id'),
             Field::make('text', 'date_of_birth', 'date_of_birth'),
             Field::make('text', 'agree', 'agree'),
             Field::make('text', 'options', 'options'),
+            Field::make('text', 'receipt_url', 'receipt_url'),
+            Field::make('text', 'id', 'id'),
+        ))
+        ->add_tab(__('Stripe'), array(
+            Field::make('text', 'payment_intent', 'payment_intent'),
+            Field::make('text', 'payment_session_id', 'payment_session_id'),
+            Field::make('textarea', 'json', 'json'),
         ))
 		;
 }
