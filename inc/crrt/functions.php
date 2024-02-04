@@ -24,6 +24,8 @@ class Order
     private $agree;
     private $date_of_birth;
 
+    private $product;
+
     public function __construct($post_data) {
         $this->car_post_id = $post_data['post_id'];
         $car_crm_id = carbon_get_post_meta($this->car_post_id, 'rentprog_id');
@@ -80,7 +82,8 @@ class Order
         return $this->car_post_id;
     }
 
-    public function getTariff($prices, $extraHoursPrice, $dateStart, $dateEnd) {
+    public function getProductTariff($prices, $extraHoursPrice, $dateStart, $dateEnd): array
+    {
         $bookingDuration = DateHelper::getDatesDuration($dateStart, $dateEnd);
 
         $price_index = 0;
@@ -102,15 +105,21 @@ class Order
         }
 
         $fullDaysPrice = $pricePerDay  * $bookingDuration['full_days'];
-        $extraHoursPrice = $extraHoursPrice * $bookingDuration['extra_hours'];
+
+        $fullDaysText = declension($bookingDuration['full_days'], ['day', 'days', 'days']);
+        $extraHoursText = '';
+        if ($bookingDuration['extra_hours'] > 0) {
+            $extraHoursPrice = $extraHoursPrice * $bookingDuration['extra_hours'];
+            $extraHoursText = declension($bookingDuration['extra_hours'], ['hour', 'hours', 'hours']);
+        }
 
         return array(
             'per_day' => $pricePerDay,
             'price' => $fullDaysPrice + $extraHoursPrice,
             'full_days' => $bookingDuration['full_days'],
             'extra_hours' => $bookingDuration['extra_hours'],
-            'full_days_text' => declension($bookingDuration['full_days'], ['day', 'days', 'days']),
-            'extra_hours_text' => declension($bookingDuration['extra_hours'], ['hour', 'hours', 'hours']),
+            'full_days_text' => $fullDaysText,
+            'extra_hours_text' => $extraHoursText,
         );
     }
 
@@ -122,7 +131,9 @@ class Order
         $extraHoursPrice = carbon_get_post_meta($this->car_post_id, 'franchise');
         $images = [get_image_url_by_id(carbon_get_post_meta($this->car_post_id, 'photos')[0])];
 
-        $tariff = $this->getTariff($prices, $extraHoursPrice, $this->date_start, $this->date_end);
+        $tariff = $this->getProductTariff($prices, $extraHoursPrice, $this->date_start, $this->date_end);
+        $tariff['name'] = $name;
+        $this->product = $tariff;
 
         $name = "{$name} ({$tariff['full_days_text']}";
         if ($tariff['extra_hours'] > 0) {
@@ -198,7 +209,7 @@ class Order
             if (!in_array($available_option['name'], $selected_options_names)) continue;
 
             $selected_option_prices = explode(',', $available_option['prices']);
-            $current_option = get_price_per_day($selected_option_prices, $this->date_start, $this->date_end);
+            $current_option = $this->getProductTariff($selected_option_prices, 0, $this->date_start, $this->date_end);
             $current_option['name'] = $available_option['name'];
             $selected_options[] = $current_option;
         }
@@ -213,7 +224,7 @@ class Order
     {
         $options_strings = [];
         foreach ($this->getOptions() as $option) {
-            $options_strings[] = "{$option['name']} {$option['total']}{$this->getCurrency()}";
+            $options_strings[] = "{$option['name']} {$option['price']}{$this->getCurrency()}";
         }
         return implode(', ', $options_strings);
     }
@@ -227,9 +238,10 @@ class Order
                     'currency' => $this->getCurrency(),
                     'product_data' => [
                         'name' => $option['name'],
+                        'description' => $option['full_days_text'] . ' ' . $option['extra_hours_text'],
                     ],
-                'unit_amount' => $option['total'] * 100, // Amount in cents (e.g., $19.99)
-            ],
+                    'unit_amount' => $option['price'] * 100, // Amount in cents (e.g., $19.99)
+                ],
             'quantity' => 1,
             ];
         }
@@ -291,6 +303,37 @@ class Order
             'agree' => $this->getAgree(),
             'date_of_birth' => $this->getDateOfBirth(),
         );
+    }
+
+    public function getTotal(): array
+    {
+        $cartItems = array(
+            $this->product,
+        );
+        $cartItems = array_merge($cartItems, $this->options);
+
+        $cart = array(
+            'per_day' => 0,
+            'price' => 0,
+            'full_days' => 0,
+            "extra_hours" => 0,
+            "full_days_text" => "",
+            "extra_hours_text" => "",
+        );
+
+        foreach ($cartItems as $cartItem) {
+            $cart['per_day'] += $cartItem['per_day'];
+            $cart['price'] += $cartItem['price'];
+
+            if ($cart['full_days_text'] !== "") continue;
+
+            $cart['full_days'] = $cartItem['full_days'];
+            $cart['extra_hours'] = $cartItem['extra_hours'];
+            $cart['full_days_text'] = $cartItem['full_days_text'];
+            $cart['extra_hours_text'] = $cartItem['extra_hours_text'];
+        }
+
+        return $cart;
     }
 }
 
@@ -410,12 +453,10 @@ class Stripe
         return carbon_get_theme_option($key_type.'stripe_secret_key');;
     }
 
-    public static function getPayLink(Order $order, Booking $booking, int $expireAfterDays = 3) {
+    public static function getPayLink(Order $order, Booking $booking) {
         $domain = $_SERVER['SERVER_NAME'];
         $booking_id = $booking->getBookingPostId();
         $user = $order->getUser();
-
-        $expireAt = DateHelper::addDaysToCurrentTimestamp($expireAfterDays);
 
         $stripe_api_url = 'https://api.stripe.com/v1/checkout/sessions';
 
@@ -430,7 +471,6 @@ class Stripe
             'payment_method_types' => ['card'],
             'line_items' => $line_items,
             'mode' => 'payment',
-            'expires_at' => $expireAt,
             'success_url' => "https://{$domain}/success?car_booking_id={$booking_id}",
             'cancel_url' => $order->getCancelPage(),
             'payment_intent_data' => [
