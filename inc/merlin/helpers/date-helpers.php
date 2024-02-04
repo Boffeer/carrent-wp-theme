@@ -84,3 +84,86 @@ function convert_rentprog_date($timestamp) {
 
     return $formattedDateString;
 }
+
+class DateHelper
+{
+    /**
+     * @param string $date. date have to be formatted as "DD.MM.YY HH:MM"
+     * @return int|null
+     */
+    public static function dateToTimestamp(string $date): ?int
+    {
+        $dateTime = DateTime::createFromFormat('d-m-Y H:i', $date);
+        return $dateTime ? $dateTime->getTimestamp() : null;
+    }
+
+    /**
+     * @param int $daysToAdd
+     * @return int|null
+     */
+    public static function addDaysToCurrentTimestamp(int $daysToAdd): ?int
+    {
+        $currentDate = new DateTime();
+        $currentDate->modify("+$daysToAdd days");
+
+        return $currentDate->getTimestamp();
+    }
+
+    /**
+     * @param string $inputDate
+     * @param int $daysToAdd
+     * @param bool $isTimestamp
+     * @return string|null
+     */
+    public static function addDaysToDate(string $inputDate, int $daysToAdd, bool $isTimestamp = false): ?string
+    {
+        $dateTime = DateTime::createFromFormat('d-m-Y H:i', $inputDate);
+
+        if ($dateTime === false) {
+            return null; // Invalid input date format
+        }
+
+        $dateTime->modify("+$daysToAdd days");
+
+        if ($isTimestamp) return $dateTime->getTimestamp();
+
+        return $dateTime->format('d-m-Y H:i');
+    }
+
+    /**
+     * @param int $timestamp
+     * @return string
+     */
+    public static function timestampToDate(int $timestamp): string
+    {
+        $dateTime = new DateTime();
+        $dateTime->setTimestamp($timestamp);
+        return $dateTime->format('d.m.Y H:i');
+    }
+
+    /**
+     * @throws Exception
+     */
+    public static function getDatesDuration($dateStart, $dateEnd) {
+        if  (is_string($dateStart) && is_string($dateEnd)) {
+            $dateStart = self::dateToTimestamp($dateStart);
+            $dateEnd = self::dateToTimestamp($dateEnd);
+        }
+        $dateStart = new DateTime("@$dateStart");
+        $dateEnd = new DateTime("@$dateEnd");
+
+        $interval = $dateStart->diff($dateEnd);
+
+        $duration = array(
+            'full_days' => $interval->days,
+            'extra_hours' => $interval->h,
+            'hours_duration' => $interval->days * 24 + $interval->h,
+        );
+
+        if ($interval->i > 0) {
+            $duration['extra_hours']++;
+        }
+
+        return $duration;
+    }
+}

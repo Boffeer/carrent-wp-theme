@@ -80,18 +80,59 @@ class Order
         return $this->car_post_id;
     }
 
+    public function getTariff($prices, $extraHoursPrice, $dateStart, $dateEnd) {
+        $bookingDuration = DateHelper::getDatesDuration($dateStart, $dateEnd);
+
+        $price_index = 0;
+        if ($bookingDuration['full_days'] < 4) {
+            $price_index = 0;
+        } elseif ($bookingDuration['full_days'] < 8) {
+            $price_index = 1;
+        } elseif ($bookingDuration['full_days'] < 16) {
+            $price_index = 2;
+        } elseif ($bookingDuration['full_days'] < 31) {
+            $price_index = 3;
+        } else {
+            $price_index = 4;
+        }
+        $pricePerDay = $prices[$price_index] ?? end($prices);
+
+        if ($bookingDuration['full_days'] === 0) {
+            $bookingDuration['full_days'] = 1;
+        }
+
+        $fullDaysPrice = $pricePerDay  * $bookingDuration['full_days'];
+        $extraHoursPrice = $extraHoursPrice * $bookingDuration['extra_hours'];
+
+        return array(
+            'per_day' => $pricePerDay,
+            'price' => $fullDaysPrice + $extraHoursPrice,
+            'full_days' => $bookingDuration['full_days'],
+            'extra_hours' => $bookingDuration['extra_hours'],
+            'full_days_text' => declension($bookingDuration['full_days'], ['day', 'days', 'days']),
+            'extra_hours_text' => declension($bookingDuration['extra_hours'], ['hour', 'hours', 'hours']),
+        );
+    }
+
     public function getCar(): array
     {
         $crm_id = carbon_get_post_meta($this->car_post_id, 'rentprog_id');
         $name = carbon_get_post_meta($this->car_post_id, 'car_name');
         $prices = explode(',', carbon_get_post_meta($this->car_post_id, 'prices'));
+        $extraHoursPrice = carbon_get_post_meta($this->car_post_id, 'franchise');
         $images = [get_image_url_by_id(carbon_get_post_meta($this->car_post_id, 'photos')[0])];
 
-        $price = get_price_per_day($prices, $this->date_start, $this->date_end);
+        $tariff = $this->getTariff($prices, $extraHoursPrice, $this->date_start, $this->date_end);
+
+        $name = "{$name} ({$tariff['full_days_text']}";
+        if ($tariff['extra_hours'] > 0) {
+            $name .= " and {$tariff['extra_hours_text']}";
+        }
+        $name .= ")";
 
         $product = array(
-            'name' => "{$name} (" . count($price['range']) . " days)",
-            'price' => $price['total'] * 100,
+            'name' => $name,
+            'price' => $tariff['price'] * 100,
             'images' => $images,
             'description' => '',
         );
@@ -101,6 +142,10 @@ class Order
         }
 
         $product['description'] .= "{$this->date_start} - {$this->date_end} ";
+
+        if ($this->location_end) {
+            $product['description'] .= " {$this->location_end}";
+        }
 
         /*
         if ($this->options_string) {
@@ -263,8 +308,9 @@ class Booking
             'post_status' => 'publish',
             'post_type' => 'car_booking', // Тип вашего кастомного поста
         );
-
         $this->booking_post_id = wp_insert_post($post_data);
+
+
         carbon_set_post_meta( $this->booking_post_id, 'booking_id', $this->booking_post_id);
         carbon_set_post_meta( $this->booking_post_id, 'phone', $user['phone']);
         carbon_set_post_meta( $this->booking_post_id, 'email', $user['email']);
@@ -364,10 +410,12 @@ class Stripe
         return carbon_get_theme_option($key_type.'stripe_secret_key');;
     }
 
-    public static function getPayLink(Order $order, Booking $booking) {
+    public static function getPayLink(Order $order, Booking $booking, int $expireAfterDays = 3) {
         $domain = $_SERVER['SERVER_NAME'];
         $booking_id = $booking->getBookingPostId();
         $user = $order->getUser();
+
+        $expireAt = DateHelper::addDaysToCurrentTimestamp($expireAfterDays);
 
         $stripe_api_url = 'https://api.stripe.com/v1/checkout/sessions';
 
@@ -382,6 +430,7 @@ class Stripe
             'payment_method_types' => ['card'],
             'line_items' => $line_items,
             'mode' => 'payment',
+            'expires_at' => $expireAt,
             'success_url' => "https://{$domain}/success?car_booking_id={$booking_id}",
             'cancel_url' => $order->getCancelPage(),
             'payment_intent_data' => [
