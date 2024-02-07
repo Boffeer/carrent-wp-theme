@@ -122,7 +122,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                         <div class="timepicker__control">
                             <div class="timepicker__drag"></div>
                         </div>
-                        <input class="timepicker__value" type="text" name="time_start" inputmode="numeric">
+                        <input class="timepicker__value" type="text" name="time_start" inputmode="numeric" value="14:00">
                     </div>
                     <div class="timepicker hero__bookform-timepicker"
                          data-min="<?php echo $timepicker_settings['min']; ?>"
@@ -132,7 +132,7 @@ $phones = explode_textarea(THEME_OPTIONS['phones']);
                         <div class="timepicker__control">
                             <div class="timepicker__drag"></div>
                         </div>
-                        <input class="timepicker__value" type="text" name="time_end" inputmode="numeric" value="14:10">
+                        <input class="timepicker__value" type="text" name="time_end" inputmode="numeric" value="14:00">
                     </div>
                     <button class="button-primary hero__bookform-submit js_form__submit"><?php pll_e('Find a Car', 'crrt'); ?></button>
                 </div>

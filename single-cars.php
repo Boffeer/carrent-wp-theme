@@ -113,7 +113,7 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                         <div class="timepicker__control">
                             <div class="timepicker__drag"></div>
                         </div>
-                        <input class="timepicker__value" type="text" name="time_start" inputmode="numeric">
+                        <input class="timepicker__value" type="text" name="time_start" inputmode="numeric" value="14:00">
                     </div>
                     <div class="timepicker hero__bookform-timepicker"
                          data-min="<?php echo $timepicker_settings['min']; ?>"
@@ -123,7 +123,7 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                         <div class="timepicker__control">
                             <div class="timepicker__drag"></div>
                         </div>
-                        <input class="timepicker__value" type="text" name="time_end" inputmode="numeric" value="14:10">
+                        <input class="timepicker__value" type="text" name="time_end" inputmode="numeric" value="14:00">
                     </div>
                     <div class="select hero__bookform-select js_form__control">
                         <select class="select__input"
@@ -258,7 +258,13 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                     </div>
                     <?php endforeach; ?>
                 </div>
-                <button class="button-primary product-hero__bookform-submit js_form__submit" data-currency="<?php echo THEME_OPTIONS['currency']; ?>"><?php pll_e('Book a car', 'crrt'); ?></button>
+                <div class="wysiwyg product-hero__bookform-validity-message">
+                    <p style="text-align: center;">Fill all fields to book a car</p>
+                </div>
+                <button class="button-primary product-hero__bookform-submit js_form__submit"
+                        data-currency="<?php echo THEME_OPTIONS['currency']; ?>"
+                        data-text-initial="<?php pll_e('Book a car', 'crrt'); ?>"
+                ><?php pll_e('Book a car', 'crrt'); ?></button>
                 <label class="checkbox js_form__control">
                     <input type="checkbox" name="agree" class="checkbox__input" value="Agree" required>
                     <span class="checkbox__check"></span>

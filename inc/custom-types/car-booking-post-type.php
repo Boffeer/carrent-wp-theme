@@ -92,6 +92,24 @@ function restrict_car_bookings_access() {
 }
 add_action('template_redirect', 'restrict_car_bookings_access');
 
+
+function getBookingInfo($booking_id) {
+    $booking = array(
+        'booking_id' => carbon_get_post_meta($booking_id, 'booking_id'),
+        'crm_booking_id' => carbon_get_post_meta($booking_id, 'crm_booking_id'),
+        'name' => carbon_get_post_meta($booking_id, 'name'),
+        'email' => carbon_get_post_meta($booking_id, 'email'),
+        'phone' => carbon_get_post_meta($booking_id, 'phone'),
+        'amount' => carbon_get_post_meta($booking_id, 'amount'),
+        'product_id' => carbon_get_post_meta($booking_id, 'product_id'),
+        'date_start' => carbon_get_post_meta($booking_id, 'date_start'),
+        'date_end' => carbon_get_post_meta($booking_id, 'date_end'),
+        'location_start' => carbon_get_post_meta($booking_id, 'location_start'),
+        'location_end' => carbon_get_post_meta($booking_id, 'location_end'),
+    );
+
+    return $booking;
+}
 // Добавьте следующий код в файл functions.php вашей темы или в свой собственный плагин
 
 //function custom_change_title_for_car_booking($title, $post_id) {

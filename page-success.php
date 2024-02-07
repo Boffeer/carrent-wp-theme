@@ -26,6 +26,7 @@ get_header();
 
     <section class="section faq success" id="faq">
         <?php
+        $socials = get_socials(THEME_OPTIONS['socials']);
         $car_booking_id = isset($_GET['car_booking_id']) ? $_GET['car_booking_id'] : false;
 
         if (!$car_booking_id) {
@@ -46,50 +47,41 @@ get_header();
         );
 
         $booking = new WP_Query($args);
-        $booking_id = $booking->posts[0]->ID;
+        $booking_id = null;
 
-        $socials = get_socials(THEME_OPTIONS['socials']);
-        ?>
+        if ($booking->have_posts()) {
+//            wp_redirect(home_url());
+//            exit;
+            $booking_id = $booking->posts[0]->ID;
+            $booking_info = getBookingInfo($booking_id);
+            $car = get_car_content($booking_info['product_id']);
+        }
 
-        <?php
-        $booking_info = array(
-            'booking_id' => carbon_get_post_meta($booking_id, 'booking_id'),
-            'crm_booking_id' => carbon_get_post_meta($booking_id, 'crm_booking_id'),
-            'name' => carbon_get_post_meta($booking_id, 'name'),
-            'email' => carbon_get_post_meta($booking_id, 'email'),
-            'phone' => carbon_get_post_meta($booking_id, 'phone'),
-            'amount' => carbon_get_post_meta($booking_id, 'amount'),
-            'product_id' => carbon_get_post_meta($booking_id, 'product_id'),
-            'date_start' => carbon_get_post_meta($booking_id, 'date_start'),
-            'date_end' => carbon_get_post_meta($booking_id, 'date_end'),
-            'time_start' => carbon_get_post_meta($booking_id, 'time_start'),
-            'time_end' => carbon_get_post_meta($booking_id, 'time_end'),
-            'location_start' => carbon_get_post_meta($booking_id, 'location_start'),
-            'location_end' => carbon_get_post_meta($booking_id, 'location_end'),
-        );
-
-        $car = get_car_content($booking_info['product_id']);
         ?>
         <div class="container faq__container">
             <h1 class="section-title faq__title" data-aos="fade-up">
-                <?php pll_e('You have booked a', 'crrt'); ?> <br>
-                <?php echo $car['title']; ?>
+                <?php if ($booking_id) : ?>
+                    <?php pll_e('You have booked a', 'crrt'); ?> <br>
+                    <?php echo $car['title']; ?>
+                <?php else: ?>
+                    <?php pll_e('There is no such booking', 'crrt'); ?> <br>
+                <?php endif; ?>
             </h1>
+            <?php if ($booking_id) : ?>
             <div class="faq__content">
                 <div class="faq__list">
                     <article class="blog-card">
                         <div class="blog-card__info">
-                            <?php if (!empty($booking_info['crm_booking_id'])) : ?>
-                                <h3 class="blog-card__title">
-                                    <?php pll_e('Order number', 'crrt'); ?> <br>
-                                </h3>
-                                <p class="blog-card__desc"><?php echo $booking_info['crm_booking_id']; ?></p>
-                            <?php else : ?>
-                                <h3 class="blog-card__title">
-                                    <?php pll_e('Order number', 'crrt'); ?> <br>
-                                </h3>
-                                <p class="blog-card__desc"><?php echo $booking_info['booking_id']; ?></p>
-                            <?php endif; ?>
+                            <h3 class="blog-card__title">
+                                <?php pll_e('Order number', 'crrt'); ?> <br>
+                            </h3>
+                            <p class="blog-card__desc">
+                                <?php if (!empty($booking_info['crm_booking_id'])) : ?>
+                                    <?php echo $booking_info['crm_booking_id']; ?>
+                                <?php else : ?>
+                                    <?php echo $booking_info['booking_id']; ?>
+                                <?php endif; ?>
+                            </p>
 
                             <h3 class="blog-card__title">
                                 <?php pll_e('Start', 'crrt'); ?> <br>
@@ -156,6 +148,7 @@ get_header();
                     </div>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
     </section>
 
