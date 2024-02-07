@@ -7,17 +7,20 @@
 
 class Order
 {
-    private $user_phone;
-    private $user_email;
     private $car_post_id;
     private $car_crm_id;
-    private $options;
 
     private $date_start;
     private $date_end;
     private $location_start;
     private $location_end;
     private $flight_number;
+
+    private $user_phone;
+    private $user_email;
+
+    private $options;
+
 
     private $cancel_page;
     private $currency;
@@ -28,9 +31,9 @@ class Order
 
     public function __construct($post_data) {
         $this->car_post_id = $post_data['post_id'];
-        $car_crm_id = carbon_get_post_meta($this->car_post_id, 'rentprog_id');
-        $this->date_start = $post_data['date_start'] . ' ' . $post_data['time_start'];
+        $this->car_crm_id = carbon_get_post_meta($this->car_post_id, 'rentprog_id');
 
+        $this->date_start = $post_data['date_start'] . ' ' . $post_data['time_start'];
         $this->date_end = $post_data['date_end'] . ' ' . $post_data['time_end'];
         if (empty($this->date_end)) {
             $this->date_end = $this->date_start;
@@ -43,8 +46,8 @@ class Order
         $this->location_end = $post_data['location_end'] ?? $post_data['location_start'];
 
         $this->flight_number = empty($post_data['flight_number']) ? '' . $post_data['flight_number'] : '';
-        $this->cancel_page = $post_data['cancel_page'];
 
+        $this->cancel_page = $post_data['cancel_page'];
         $this->currency = $this->getCurrencyCode(carbon_get_theme_option('currency'));
 
         $this->setOptions($post_data['options']);
@@ -120,6 +123,7 @@ class Order
             'extra_hours' => $bookingDuration['extra_hours'],
             'full_days_text' => $fullDaysText,
             'extra_hours_text' => $extraHoursText,
+            'price_index' => $price_index,
         );
     }
 
@@ -319,6 +323,8 @@ class Order
             "extra_hours" => 0,
             "full_days_text" => "",
             "extra_hours_text" => "",
+            'price_index' => 0,
+            'currency' => carbon_get_theme_option('currency'),
         );
 
         foreach ($cartItems as $cartItem) {
@@ -327,6 +333,7 @@ class Order
 
             if ($cart['full_days_text'] !== "") continue;
 
+            $cart['price_index'] = $cartItem['price_index'];
             $cart['full_days'] = $cartItem['full_days'];
             $cart['extra_hours'] = $cartItem['extra_hours'];
             $cart['full_days_text'] = $cartItem['full_days_text'];
@@ -498,6 +505,18 @@ class Stripe
     }
 }
 
+add_action('wp_ajax_get_order_total', 'get_order_total');
+add_action('wp_ajax_nopriv_get_order_total', 'get_order_total');
+function get_order_total()
+{
+    $order = new Order($_POST);
+
+    echo json_encode(array(
+        'total' => $order->getTotal(),
+        'paylink' => null,
+    ), JSON_UNESCAPED_UNICODE);
+    wp_die();
+}
 
 add_action('wp_ajax_get_stripe_paylink', 'get_stripe_paylink');
 add_action('wp_ajax_nopriv_get_stripe_paylink', 'get_stripe_paylink');
@@ -508,11 +527,10 @@ function get_stripe_paylink()
     $payLinkSession = Stripe::getPayLink($order, $booking);
 
     $booking->setPaymentSessionId($payLinkSession['id']);
-//    $booking->setInitialMetaData($order);
-    log_telegram(json_encode($order->getMetaData($booking->getBookingPostId())));
 
     echo json_encode(array(
 //        'session' => $payLinkSession,
+        'total' => $order->getTotal(),
         'paylink' => $payLinkSession['url'],
     ), JSON_UNESCAPED_UNICODE);
     wp_die();
@@ -544,7 +562,6 @@ function get_price_per_day($prices, $date_start, $date_end) {
         'total' => $total,
         'range' => $date_range,
     );
-
 }
 
 
