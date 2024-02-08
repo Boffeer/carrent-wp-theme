@@ -12,32 +12,34 @@ class Stripe
         return carbon_get_theme_option($key_type.'stripe_secret_key');;
     }
 
-    public static function getPayLink($bookingId, Reservation $reservation, Client $client) {
+    public static function getCheckoutSession(Reservation $reservation, Client $client, $products, $metadata) {
         $domain = $_SERVER['SERVER_NAME'];
 
         $stripe_api_url = 'https://api.stripe.com/v1/checkout/sessions';
-
-        $line_items = array_merge([$order->getCarProduct()], $order->getOptionsProducts());
+        $bookingId = $metadata['booking_id'];
 
         $headers = array(
             'Authorization: Bearer ' . self::getSecret(),
             'Content-Type: application/x-www-form-urlencoded',
         );
 
+
         $data = [
             'payment_method_types' => ['card'],
-            'line_items' => $line_items,
+            'line_items' => $products,
             'mode' => 'payment',
-            'success_url' => "https://{$domain}/success?car_booking_id={$booking_id}",
-            'cancel_url' => $order->getCancelPage(),
+            'success_url' => "https://{$domain}/success?car_booking_id={$bookingId}",
+            'cancel_url' => $reservation->getCancelPage(),
             'payment_intent_data' => [
-                'metadata' => $order->getMetaData($booking_id),
+                'metadata' => $metadata,
             ],
-            'metadata' => $order->getMetaData($booking_id),
+            'metadata' => $metadata,
             'allow_promotion_codes' => 'true', // Enable promotion codes
-            'customer_email' => $user['email'],
-            'client_reference_id' => $user['phone'],
+            'customer_email' => $client->getEmail(),
+            'client_reference_id' => $client->getPhone(),
         ];
+
+//        log_telegram(json_encode($data));
 
         $post_data = http_build_query($data);
         $ch = curl_init();

@@ -5,7 +5,7 @@ class CheckoutSession {
     private Client $client;
     private Car $car;
     private $products = array();
-    private $booking_post_id;
+    private $bookingPostId;
     private $metadata;
 
     public function __construct(Reservation $reservation, Client $client) {
@@ -19,18 +19,22 @@ class CheckoutSession {
         }
     }
 
+    public function getBookingPostId() {
+        return $this->bookingPostId;
+    }
+
     public function getProducts() {
         return $this->products;
     }
 
-    public function setMetadata($bookingId) {
+    public function getMetadata() {
         $locations = $this->client->getLocations();
         $datesRange = $this->reservation->getDatesRange();
-        $this->metadata = array(
+        return array(
             'user_phone' => $this->client->getPhone(),
             'user_email' => $this->client->getEmail(),
             'product_id' => $this->car->getCarId(),
-            'booking_id' => $bookingId,
+            'booking_id' => $this->bookingPostId,
             'date_start' => $datesRange['start'],
             'date_end' => $datesRange['end'],
             'location_start' => $locations['start'],
@@ -50,27 +54,27 @@ class CheckoutSession {
             'post_status' => 'publish',
             'post_type' => 'car_booking',
         );
-        $this->booking_post_id = wp_insert_post($post_data);
+        $this->bookingPostId = wp_insert_post($post_data);
 
-        carbon_set_post_meta( $this->booking_post_id, 'booking_id', $this->booking_post_id);
-        carbon_set_post_meta( $this->booking_post_id, 'phone', $this->client->getPhone());
-        carbon_set_post_meta( $this->booking_post_id, 'email', $this->client->getEmail());
-        carbon_set_post_meta( $this->booking_post_id, 'flight_number', $this->client->getFlightNumber());
-        carbon_set_post_meta( $this->booking_post_id, 'agree', $this->client->getAgreeTerms());
-        carbon_set_post_meta( $this->booking_post_id, 'date_of_birth', $this->client->getDateOfBirth());
+        carbon_set_post_meta( $this->bookingPostId, 'booking_id', $this->bookingPostId);
+        carbon_set_post_meta( $this->bookingPostId, 'phone', $this->client->getPhone());
+        carbon_set_post_meta( $this->bookingPostId, 'email', $this->client->getEmail());
+        carbon_set_post_meta( $this->bookingPostId, 'flight_number', $this->client->getFlightNumber());
+        carbon_set_post_meta( $this->bookingPostId, 'agree', $this->client->getAgreeTerms());
+        carbon_set_post_meta( $this->bookingPostId, 'date_of_birth', $this->client->getDateOfBirth());
 
         $locations = $this->client->getLocations();
-        carbon_set_post_meta( $this->booking_post_id, 'location_start', $locations['start']);
-        carbon_set_post_meta( $this->booking_post_id, 'location_end', $locations['end']);
+        carbon_set_post_meta( $this->bookingPostId, 'location_start', $locations['start']);
+        carbon_set_post_meta( $this->bookingPostId, 'location_end', $locations['end']);
 
         $datesRange = $this->reservation->getDatesRange();
-        carbon_set_post_meta( $this->booking_post_id, 'date_start', $datesRange['start']);
-        carbon_set_post_meta( $this->booking_post_id, 'date_end', $datesRange['end']);
+        carbon_set_post_meta( $this->bookingPostId, 'date_start', $datesRange['start']);
+        carbon_set_post_meta( $this->bookingPostId, 'date_end', $datesRange['end']);
 
-        carbon_set_post_meta( $this->booking_post_id, 'product_id', $this->car->getCarId());
-        carbon_set_post_meta( $this->booking_post_id, 'options', $this->reservation->getOptionsText());
+        carbon_set_post_meta( $this->bookingPostId, 'product_id', $this->car->getCarId());
+        carbon_set_post_meta( $this->bookingPostId, 'options', $this->reservation->getOptionsText());
 
-//        Stripe::getPayLink($this->reservation, $this->client);
+        return Stripe::getCheckoutSession($this->reservation, $this->client, $this->getProducts(), $this->getMetadata());
     }
     public function handleComplete() {
 

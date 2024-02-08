@@ -4,6 +4,7 @@ class Reservation {
     private Car $car;
     private array $selectedOptions = [];
     private array $datesRange;
+    private $cancelPage;
 
     public function __construct(Car $car, $selectedOptionsNames, DatesRange $datesRange) {
         $this->car = $car;
@@ -51,7 +52,7 @@ class Reservation {
             $optionPrice = new PriceCalculator($option['rentalPeriodPrices'], $this->datesRange);
             $optionsTotal = $optionPrice->getTotalMessage();
             $product = new Product($option['name'], $optionsTotal);
-            $products = $product->get();
+            $products[] = $product->get();
         }
         return $products;
     }
@@ -94,5 +95,12 @@ class Reservation {
         }
 
         return $cart;
+    }
+
+    public function setCancelPage($cancelPage) {
+        $this->cancelPage = $cancelPage;
+    }
+    public function getCancelPage() {
+        return $this->cancelPage;
     }
 }

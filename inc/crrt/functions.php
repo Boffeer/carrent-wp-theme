@@ -491,16 +491,17 @@ function get_stripe_paylink()
         $locations
     );
     $reservation = new Reservation($car, $_POST['options'], $datesRange);
+    $reservation->setCancelPage($_POST['cancel_page']);
 
     $checkoutSession = new CheckoutSession($reservation, $client);
-    $checkoutSession->create();
+    $checkoutSessionData = $checkoutSession->create();
+    log_telegram(json_encode($checkoutSessionData));
 
 
     echo json_encode(array(
-//        'session' => $payLinkSession,
+        'session' => $checkoutSessionData,
         'total' => $reservation->getTotal(),
-        'paylink' => null,
-//        'paylink' => $payLinkSession['url'],
+        'paylink' => $checkoutSessionData['url'],
     ), JSON_UNESCAPED_UNICODE);
     wp_die();
 }
