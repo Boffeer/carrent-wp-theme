@@ -3,7 +3,14 @@
 //use Carbon_Fields\Container;
 //use Carbon_Fields\Field;
 
-//require_once THEME_INC . '/stripe-php/init.php';
+require_once THEME_INC . '/crrt/Car.php';
+require_once THEME_INC . '/crrt/CheckoutSession.php';
+require_once THEME_INC . '/crrt/Client.php';
+require_once THEME_INC . '/crrt/DatesRange.php';
+require_once THEME_INC . '/crrt/PriceCalculator.php';
+require_once THEME_INC . '/crrt/Product.php';
+require_once THEME_INC . '/crrt/Reservation.php';
+require_once THEME_INC . '/crrt/Stripe.php';
 
 class Order
 {
@@ -156,7 +163,7 @@ class Order
             $product['description'] .= "{$this->location_start}, ";
         }
 
-        $product['description'] .= "{$this->date_start} - {$this->date_end} ";
+        $product['description'] .= "{$this->date_start} - {$this->date_end}";
 
         if ($this->location_end) {
             $product['description'] .= " {$this->location_end}";
@@ -246,7 +253,7 @@ class Order
                     ],
                     'unit_amount' => $option['price'] * 100, // Amount in cents (e.g., $19.99)
                 ],
-            'quantity' => 1,
+                'quantity' => 1,
             ];
         }
 
@@ -397,9 +404,7 @@ class Booking
         $posts = get_posts($args);
         if ($posts) {
             foreach ($posts as $post) {
-                // Ваши действия с найденной записью
                 $post_id = $post->ID;
-                // ...
             }
         }
 
@@ -415,29 +420,19 @@ class Booking
            carbon_set_post_meta( $this->booking_post_id, 'payment_session_id', $id);
     }
 
-        // Выполните другие действия, если необходимо
+    public function setMetaData(Order $order) {
         carbon_set_post_meta( $post_id, 'name', $name);
         carbon_set_post_meta( $post_id, 'created', $created);
         carbon_set_post_meta( $post_id, 'amount', $amount);
         carbon_set_post_meta( $post_id, 'id', $event_id);
         carbon_set_post_meta( $post_id, 'json', json_encode($event_json));
-        carbon_set_post_meta( $post_id, 'product_id', $product_id);
         carbon_set_post_meta( $post_id, 'payment_intent', $payment_intent);
-        carbon_set_post_meta( $post_id, 'booking_id', $booking_id);
 
-        carbon_set_post_meta( $post_id, 'date_start', $date_start);
-        carbon_set_post_meta( $post_id, 'date_end', $date_end);
         carbon_set_post_meta( $post_id, 'time_start', $time_start);
         carbon_set_post_meta( $post_id, 'time_end', $time_end);
-        carbon_set_post_meta( $post_id, 'location_start', $location_start);
-        carbon_set_post_meta( $post_id, 'location_end', $location_end);
-        carbon_set_post_meta( $post_id, 'flight_number', $flight_number);
         carbon_set_post_meta( $post_id, 'receipt_url', $receipt_url);
 
-        carbon_set_post_meta( $post_id, 'options', $options);
 
-        carbon_set_post_meta( $post_id, 'agree', $agree);
-        carbon_set_post_meta( $post_id, 'date_of_birth', $date_of_birth);
 
         $booking = create_booking($post_id);
 
@@ -448,464 +443,6 @@ class Booking
     }
 }
 
-
-class Car {
-    private $carId = null;
-    private $name = null;
-    private $rentalPeriodPrices = null;
-    private $franchise = null;
-    private $image = null;
-    private $availableOptions = array();
-
-    public function __construct($carId) {
-        $this->carId = $carId;
-
-        $this->name = carbon_get_post_meta($this->carId, 'car_name');
-        $this->rentalPeriodPrices = explode(',', carbon_get_post_meta($this->carId, 'prices'));
-        $this->franchise = (int)carbon_get_post_meta($this->carId, 'franchise');
-        $this->image = get_image_url_by_id(carbon_get_post_meta($this->carId, 'photos')[0]);
-
-        $options = carbon_get_post_meta($this->carId, 'car_options');
-        foreach ($options as $option) {
-            $this->availableOptions[] = array(
-                'name' => $option['name'],
-                'rentalPeriodPrices' => explode(',', $option['prices']),
-            );
-        }
-    }
-
-    public function getCarId() {
-        return $this->carId;
-    }
-    public function getName() {
-        return $this->name;
-    }
-    public function getImage() {
-        return $this->image;
-    }
-    public function getRentalPeriodPrices() {
-        return $this->rentalPeriodPrices;
-    }
-    public function getFranchise() {
-        return $this->franchise;
-    }
-
-    public function getAvailableOptions() {
-        return $this->availableOptions;
-    }
-
-    public function get() {
-        return array(
-            'id' => $this->carId,
-            'name' => $this->name,
-            'fullDayPrices' => $this->rentalPeriodPrices,
-            'extraHourPrice' => $this->franchise,
-            'image' => $this->image,
-            'availableOptions' => $this->availableOptions,
-        );
-    }
-
-}
-
-
-class PriceCalculator {
-    private int $days;
-    private int $singleDayPrice;
-
-    private int $hours;
-    private int $franchise;
-
-
-    public function __construct(array $rentalPeriodPrices, $datesRange,  int $franchise = 0)
-    {
-        $duration = DateHelper::getDatesDuration($datesRange['start'], $datesRange['end']);
-        $this->days = $duration['full_days'];
-        $this->singleDayPrice = (int)($rentalPeriodPrices[$this->getPriceIndex()] ?? end($rentalPeriodPrices));
-
-        $this->hours = $duration['extra_hours'];
-        $this->franchise = $franchise;
-    }
-
-    private function getPriceIndex() {
-        if ($this->days < 4) {
-            $priceIndex = 0;
-        } elseif ($this->days < 8) {
-            $priceIndex = 1;
-        } elseif ($this->days < 16) {
-            $priceIndex = 2;
-        } elseif ($this->days < 31) {
-            $priceIndex = 3;
-        } else {
-            $priceIndex = 4;
-        }
-
-        return $priceIndex;
-    }
-
-    private function getTotalForDays () {
-        return $this->days * $this->singleDayPrice;
-    }
-    private function getTotalFranchise() {
-        if ($this->franchise === 0) return 0;
-        return $this->franchise * $this->hours;
-    }
-    public function calculateTotal() {
-        return $this->getTotalForDays() + $this->getTotalFranchise();
-    }
-
-    public function getTotalMessage() {
-
-        $fullDaysText = declension($this->days, ['day', 'days', 'days']);
-        $extraHoursText = '';
-        if ($this->hours > 0) {
-            $extraHoursText = declension($this->hours, ['hour', 'hours', 'hours']);
-        }
-
-        return array(
-            'per_day' => $this->singleDayPrice,
-            'price' => $this->calculateTotal(),
-            'full_days' => $this->days,
-            'extra_hours' => $this->hours,
-            'full_days_text' => $fullDaysText,
-            'extra_hours_text' => $extraHoursText,
-            'price_index' => $this->getPriceIndex(),
-        );
-    }
-}
-
-class Product {
-    private $name;
-    private $description;
-    private $price;
-    private $image;
-    private $currency = 'eur';
-
-
-    public function __construct($name, $priceTotalMessage, $image = null) {
-        $this->name = $this->formatName($name, $priceTotalMessage);
-        $this->description = $this->formatDescription();
-        $this->price = $this->formatPrice($priceTotalMessage);
-        $this->image = $image;
-    }
-    public function formatName($name, $priceTotalMessage) {
-        $name = "{$name} ({$priceTotalMessage['full_days_text']}";
-        if (!empty($priceTotalMessage['extra_hours'])) {
-            $name .= " {$priceTotalMessage['extra_hours_text']}";
-        }
-        $name .= ")";
-        return $name;
-    }
-    public function formatDescription() {
-        return 'desc';
-    }
-    public function formatPrice($priceTotalMessage) {
-        return $priceTotalMessage['price'] * 100;
-    }
-
-    public function get() {
-        $productData = array(
-            'name' => $this->name,
-            'description' => $this->description,
-        );
-        if (!empty($this->image)) {
-            $productData['images'] = [$this->image];
-        }
-
-        return array(
-            'price_data' => [
-                'currency' => $this->currency,
-                'product_data' => $productData,
-                'unit_amount' => $this->price, // Amount in cents (e.g., $19.99)
-            ],
-            'quantity' => 1,
-        );
-    }
-}
-
-class Reservation {
-    private Car $car;
-    private array $selectedOptions = [];
-    private array $datesRange;
-
-    public function __construct(Car $car, $selectedOptionsNames, DatesRange $datesRange) {
-        $this->car = $car;
-        $this->datesRange = $datesRange->get();
-
-        $selectedOptionsNames = explode(',', $selectedOptionsNames);
-        foreach ($this->car->getAvailableOptions() as $availableOption) {
-            if (!in_array($availableOption['name'], $selectedOptionsNames)) continue;
-            $this->selectedOptions[] = $availableOption;
-        }
-    }
-
-    public function getCar() {
-        return $this->car;
-    }
-    public function getDatesRange() {
-        return $this->datesRange;
-    }
-    public function getOptions() {
-        return $this->selectedOptions;
-    }
-
-    public function getCarTotal(): array
-    {
-        $carPrice = new PriceCalculator($this->car->getRentalPeriodPrices(), $this->datesRange, $this->car->getFranchise());
-        return $carPrice->getTotalMessage();
-    }
-    public function getCarProduct() {
-        $total = $this->getCarTotal();
-        $product = new Product($this->car->getName(), $total, $this->car->getImage());
-        return $product->get();
-    }
-
-    public function getOptionsTotal() {
-        $optionsTotal = array();
-        foreach ($this->selectedOptions as $option) {
-            $option = new PriceCalculator($option['rentalPeriodPrices'], $this->datesRange);
-            $optionsTotal[] = $option->getTotalMessage();
-        }
-        return $optionsTotal;
-    }
-    public function getOptionsProducts() {
-        $products = array();
-        foreach ($this->selectedOptions as $option) {
-            $optionPrice = new PriceCalculator($option['rentalPeriodPrices'], $this->datesRange);
-            $optionsTotal = $optionPrice->getTotalMessage();
-            $product = new Product($option['name'], $optionsTotal);
-            $products = $product->get();
-        }
-        return $products;
-    }
-    public function getOptionsText() {
-        $options_strings = [];
-        foreach ($this->selectedOptions as $option) {
-            $options_strings[] = "{$option['name']}";
-        }
-        return implode(', ', $options_strings);
-    }
-
-    public function getTotal() {
-        $cartItems = array(
-            $this->getCarTotal(),
-        );
-        $cartItems = array_merge($cartItems, $this->getOptionsTotal());
-
-        $cart = array(
-            'per_day' => 0,
-            'price' => 0,
-            'full_days' => 0,
-            "extra_hours" => 0,
-            "full_days_text" => "",
-            "extra_hours_text" => "",
-            'price_index' => 0,
-            'currency' => carbon_get_theme_option('currency'),
-        );
-
-        foreach ($cartItems as $cartItem) {
-            $cart['per_day'] += $cartItem['per_day'];
-            $cart['price'] += $cartItem['price'];
-
-            if ($cart['full_days_text'] !== "") continue;
-
-            $cart['price_index'] = $cartItem['price_index'];
-            $cart['full_days'] = $cartItem['full_days'];
-            $cart['extra_hours'] = $cartItem['extra_hours'];
-            $cart['full_days_text'] = $cartItem['full_days_text'];
-            $cart['extra_hours_text'] = $cartItem['extra_hours_text'];
-        }
-
-        return $cart;
-    }
-}
-
-class CheckoutSession {
-    private Reservation $reservation;
-    private Client $client;
-    private Car $car;
-    private $products = array();
-    private $booking_post_id;
-    private $metadata;
-
-    public function __construct(Reservation $reservation, Client $client) {
-        $this->reservation = $reservation;
-        $this->client = $client;
-        $this->car = $reservation->getCar();
-
-        $this->products[] = $reservation->getCarProduct();
-        foreach ($reservation->getOptionsProducts() as $product) {
-            $this->products[] = $product;
-        }
-    }
-
-    public function getProducts() {
-        return $this->products;
-    }
-
-    public function setMetadata($bookingId) {
-            $locations = $this->client->getLocations();
-            $datesRange = $this->reservation->getDatesRange();
-            $this->metadata = array(
-                'user_phone' => $this->client->getPhone(),
-                'user_email' => $this->client->getEmail(),
-                'product_id' => $this->car->getCarId(),
-                'booking_id' => $bookingId,
-                'date_start' => $datesRange['start'],
-                'date_end' => $datesRange['end'],
-                'location_start' => $locations['start'],
-                'location_end' => $locations['end'],
-                'flight_number' => $this->client->getFlightNumber(),
-                'options' => $this->reservation->getOptionsText(),
-                'agree' => $this->client->getAgreeTerms(),
-                'date_of_birth' => $this->client->getDateOfBirth(),
-            );
-    }
-
-    public function create() {
-        $title = "Пользователь начал бронирование {$this->client->getPhone()} - {$this->client->getEmail()}";
-        $post_data = array(
-            'post_title' => $title,
-            'post_content' => '',
-            'post_status' => 'publish',
-            'post_type' => 'car_booking',
-        );
-        $this->booking_post_id = wp_insert_post($post_data);
-
-        carbon_set_post_meta( $this->booking_post_id, 'booking_id', $this->booking_post_id);
-        carbon_set_post_meta( $this->booking_post_id, 'phone', $this->client->getPhone());
-        carbon_set_post_meta( $this->booking_post_id, 'email', $this->client->getEmail());
-        carbon_set_post_meta( $this->booking_post_id, 'flight_number', $this->client->getFlightNumber());
-        carbon_set_post_meta( $this->booking_post_id, 'agree', $this->client->getAgreeTerms());
-        carbon_set_post_meta( $this->booking_post_id, 'date_of_birth', $this->client->getDateOfBirth());
-
-        $locations = $this->client->getLocations();
-        carbon_set_post_meta( $this->booking_post_id, 'location_start', $locations['start']);
-        carbon_set_post_meta( $this->booking_post_id, 'location_end', $locations['end']);
-
-        $datesRange = $this->reservation->getDatesRange();
-        carbon_set_post_meta( $this->booking_post_id, 'date_start', $datesRange['start']);
-        carbon_set_post_meta( $this->booking_post_id, 'date_end', $datesRange['end']);
-
-        carbon_set_post_meta( $this->booking_post_id, 'product_id', $this->car->getCarId());
-        carbon_set_post_meta( $this->booking_post_id, 'options', $this->reservation->getOptionsText());
-    }
-    public function handleComplete() {
-
-    }
-    public function handleExprire() {
-
-    }
-}
-
-class Client {
-    private string $phone;
-    private string $email;
-    private string $dateOfBirth;
-    private array $locations;
-    private string $flightNumber;
-    private string $agreeTerms;
-
-    public function __construct(string $phone, string $email, string $dateOfBirth, string $agreeTerms, string $flightNumber, array $locations) {
-        $this->phone = $phone;
-        $this->email = $email;
-        $this->dateOfBirth = $dateOfBirth;
-        $this->locations = $locations;
-        $this->flightNumber = $flightNumber;
-        $this->agreeTerms = $agreeTerms;
-    }
-
-    public function getPhone() {
-        return $this->phone;
-    }
-    public function getEmail() {
-        return $this->email;
-    }
-    public function getDateOfBirth() {
-        return $this->dateOfBirth;
-    }
-    public function getAgreeTerms() {
-        return $this->agreeTerms;
-    }
-    public function getFlightNumber() {
-        return $this->flightNumber;
-    }
-    public function getLocations() {
-        return $this->locations;
-    }
-}
-
-
-class DatesRange {
-    private array $datesRange = array(
-        'start' => null,
-        'end' => null,
-    );
-    public function __construct($startDate, $startTime, $endDate, $endTime) {
-        $this->datesRange['start'] = DateHelper::createDateTime($startDate, $startTime);
-        $this->datesRange['end'] = DateHelper::createDateTime($endDate, $endTime);
-    }
-    public function get() {
-        return $this->datesRange;
-    }
-}
-
-
-class Stripe
-{
-    public static function getSecret() {
-        $key_type = carbon_get_theme_option('stripe_key_type');
-        if ($key_type === 'prod') {
-            $key_type = '';
-        } else {
-            $key_type.= '_';
-        }
-        return carbon_get_theme_option($key_type.'stripe_secret_key');;
-    }
-
-    public static function getPayLink(Order $order, Booking $booking) {
-        $domain = $_SERVER['SERVER_NAME'];
-        $booking_id = $booking->getBookingPostId();
-        $user = $order->getUser();
-
-        $stripe_api_url = 'https://api.stripe.com/v1/checkout/sessions';
-
-        $line_items = array_merge([$order->getCarProduct()], $order->getOptionsProducts());
-
-        $headers = array(
-            'Authorization: Bearer ' . self::getSecret(),
-            'Content-Type: application/x-www-form-urlencoded',
-        );
-
-        $data = [
-            'payment_method_types' => ['card'],
-            'line_items' => $line_items,
-            'mode' => 'payment',
-            'success_url' => "https://{$domain}/success?car_booking_id={$booking_id}",
-            'cancel_url' => $order->getCancelPage(),
-            'payment_intent_data' => [
-                'metadata' => $order->getMetaData($booking_id),
-            ],
-            'metadata' => $order->getMetaData($booking_id),
-            'allow_promotion_codes' => 'true', // Enable promotion codes
-            'customer_email' => $user['email'],
-            'client_reference_id' => $user['phone'],
-        ];
-
-        $post_data = http_build_query($data);
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $stripe_api_url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $response = curl_exec($ch);
-
-        curl_close($ch);
-
-        return json_decode($response, true);
-//        return $session_data['url'];
-    }
-}
 
 add_action('wp_ajax_get_order_total', 'get_order_total');
 add_action('wp_ajax_nopriv_get_order_total', 'get_order_total');
@@ -1006,6 +543,7 @@ function handle_stripe_webhook() {
     $event_json = json_decode($body);
 
 //    echo json_encode(array('test' => 'test', 'event' => $event_json));
+    log_telegram(json_encode($event_json));
 
     if ($event_json->type === 'charge.succeeded') {
         $event_id = $event_json->id;
