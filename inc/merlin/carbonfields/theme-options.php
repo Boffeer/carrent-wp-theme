@@ -23,6 +23,8 @@ Container::make('theme_options', 'theme_settings',  'Theme settings')
             ->set_width(33),
         Field::make('text', 'time_step', 'Timepicker minutes step')
             ->set_width(33),
+        Field::make('text', 'day_threshold', 'Day threshold')
+            ->set_width(33),
 
 		Field::make('header_scripts', 'crb_header_script', 'Header Script'),
 		Field::make('footer_scripts', 'crb_footer_script', 'Footer Script'),

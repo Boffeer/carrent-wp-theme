@@ -157,13 +157,25 @@ class DateHelper
         $duration = array(
             'full_days' => $interval->days,
             'extra_hours' => $interval->h,
-            'hours_duration' => $interval->days * 24 + $interval->h,
         );
 
         if ($interval->i > 0) {
             $duration['extra_hours']++;
         }
 
+        $dayThreshold = (int)carbon_get_theme_option('day_threshold');
+        if ($duration['extra_hours'] > $dayThreshold) {
+            $duration['full_days']++;
+            $duration['extra_hours'] = 0;
+        } else if ($duration['extra_hours'] < $dayThreshold && $duration['full_days'] === 0) {
+            $duration['full_days'] = 1;
+            $duration['extra_hours'] = 0;
+        }
+
         return $duration;
+    }
+
+    public static function createDateTime($date, $time) {
+        return "{$date} {$time}";
     }
 }

@@ -448,6 +448,202 @@ class Booking
     }
 }
 
+
+class Car {
+    private $carId = null;
+    private $name = null;
+    private $rentalPeriodPrices = null;
+    private $franchise = null;
+    private $image = null;
+    private $availableOptions = array();
+
+    public function __construct($carId) {
+        $this->carId = $carId;
+
+        $this->name = carbon_get_post_meta($this->carId, 'car_name');
+        $this->rentalPeriodPrices = explode(',', carbon_get_post_meta($this->carId, 'prices'));
+        $this->franchise = (int)carbon_get_post_meta($this->carId, 'franchise');
+        $this->image = get_image_url_by_id(carbon_get_post_meta($this->carId, 'photos')[0]);
+
+        $options = carbon_get_post_meta($this->carId, 'car_options');
+        foreach ($options as $option) {
+            $this->availableOptions[] = array(
+                'name' => $option['name'],
+                'rentalPeriodPrices' => explode(',', $option['prices']),
+            );
+        }
+    }
+
+    public function getRentalPeriodPrices() {
+        return $this->rentalPeriodPrices;
+    }
+    public function getFranchise() {
+        return $this->franchise;
+    }
+
+    public function getAvailableOptions() {
+        return $this->availableOptions;
+    }
+
+    public function get() {
+        return array(
+            'id' => $this->carId,
+            'name' => $this->name,
+            'fullDayPrices' => $this->rentalPeriodPrices,
+            'extraHourPrice' => $this->franchise,
+            'image' => $this->image,
+            'availableOptions' => $this->availableOptions,
+        );
+    }
+
+}
+
+
+class PriceCalculator {
+    private int $days;
+    private int $singleDayPrice;
+
+    private int $hours;
+    private int $franchise;
+
+
+    public function __construct(array $rentalPeriodPrices, $datesRange,  int $franchise = 0)
+    {
+        $duration = DateHelper::getDatesDuration($datesRange['start'], $datesRange['end']);
+        $this->days = $duration['full_days'];
+        $this->singleDayPrice = (int)($rentalPeriodPrices[$this->getPriceIndex()] ?? end($rentalPeriodPrices));
+
+        $this->hours = $duration['extra_hours'];
+        $this->franchise = $franchise;
+    }
+
+    private function getPriceIndex() {
+        if ($this->days < 4) {
+            $priceIndex = 0;
+        } elseif ($this->days < 8) {
+            $priceIndex = 1;
+        } elseif ($this->days < 16) {
+            $priceIndex = 2;
+        } elseif ($this->days < 31) {
+            $priceIndex = 3;
+        } else {
+            $priceIndex = 4;
+        }
+
+        return $priceIndex;
+    }
+
+    private function getTotalForDays () {
+        return $this->days * $this->singleDayPrice;
+    }
+    private function getTotalFranchise() {
+        if ($this->franchise === 0) return 0;
+        return $this->franchise * $this->hours;
+    }
+    private function calculateTotal() {
+        return $this->getTotalForDays() + $this->getTotalFranchise();
+    }
+
+    public function getTotalMessage() {
+
+        $fullDaysText = declension($this->days, ['day', 'days', 'days']);
+        $extraHoursText = '';
+        if ($this->hours > 0) {
+            $extraHoursText = declension($this->hours, ['hour', 'hours', 'hours']);
+        }
+
+        return array(
+            'per_day' => $this->singleDayPrice,
+            'price' => $this->calculateTotal(),
+            'full_days' => $this->days,
+            'extra_hours' => $this->hours,
+            'full_days_text' => $fullDaysText,
+            'extra_hours_text' => $extraHoursText,
+            'price_index' => $this->getPriceIndex(),
+        );
+    }
+}
+
+class Reservation {
+    private Car $car;
+    private array $selectedOptions = [];
+    private array $datesRange;
+
+    public function __construct(Car $car, $selectedOptionsNames, DatesRange $datesRange) {
+        $this->car = $car;
+        $this->datesRange = $datesRange->get();
+
+        $selectedOptionsNames = explode(',', $selectedOptionsNames);
+        foreach ($this->car->getAvailableOptions() as $availableOption) {
+            if (!in_array($availableOption['name'], $selectedOptionsNames)) continue;
+            $this->selectedOptions[] = $availableOption;
+        }
+    }
+
+    public function getCarTotal(): array
+    {
+        $carPrice = new PriceCalculator($this->car->getRentalPeriodPrices(), $this->datesRange, $this->car->getFranchise());
+        return $carPrice->getTotalMessage();
+    }
+
+    public function getOptionsTotal() {
+        $optionsTotal = array();
+        foreach ($this->selectedOptions as $option) {
+            $option = new PriceCalculator($option['rentalPeriodPrices'], $this->datesRange);
+            $optionsTotal[] = $option->getTotalMessage();
+        }
+        return $optionsTotal;
+    }
+
+    public function getTotal() {
+        $cartItems = array(
+            $this->getCarTotal(),
+        );
+        $cartItems = array_merge($cartItems, $this->getOptionsTotal());
+
+        $cart = array(
+            'per_day' => 0,
+            'price' => 0,
+            'full_days' => 0,
+            "extra_hours" => 0,
+            "full_days_text" => "",
+            "extra_hours_text" => "",
+            'price_index' => 0,
+            'currency' => carbon_get_theme_option('currency'),
+        );
+
+        foreach ($cartItems as $cartItem) {
+            $cart['per_day'] += $cartItem['per_day'];
+            $cart['price'] += $cartItem['price'];
+
+            if ($cart['full_days_text'] !== "") continue;
+
+            $cart['price_index'] = $cartItem['price_index'];
+            $cart['full_days'] = $cartItem['full_days'];
+            $cart['extra_hours'] = $cartItem['extra_hours'];
+            $cart['full_days_text'] = $cartItem['full_days_text'];
+            $cart['extra_hours_text'] = $cartItem['extra_hours_text'];
+        }
+
+        return $cart;
+    }
+}
+
+class DatesRange {
+    private array $datesRange = array(
+        'start' => null,
+        'end' => null,
+    );
+    public function __construct($startDate, $startTime, $endDate, $endTime) {
+        $this->datesRange['start'] = DateHelper::createDateTime($startDate, $startTime);
+        $this->datesRange['end'] = DateHelper::createDateTime($endDate, $endTime);
+    }
+    public function get() {
+        return $this->datesRange;
+    }
+}
+
+
 class Stripe
 {
     public static function getSecret() {
@@ -511,8 +707,14 @@ function get_order_total()
 {
     $order = new Order($_POST);
 
+    $car = new Car($_POST['post_id']);
+    $datesRange = new DatesRange($_POST['date_start'], $_POST['time_start'], $_POST['date_end'], $_POST['time_end']);
+
+    $reservation = new Reservation($car, $_POST['options'], $datesRange);
+    log_telegram(json_encode($reservation->getTotal()));
+
     echo json_encode(array(
-        'total' => $order->getTotal(),
+        'total' => $reservation->getTotal(),
         'paylink' => null,
     ), JSON_UNESCAPED_UNICODE);
     wp_die();
@@ -524,6 +726,7 @@ function get_stripe_paylink()
 {
     $order = new Order($_POST);
     $booking = new Booking($order);
+
     $payLinkSession = Stripe::getPayLink($order, $booking);
 
     $booking->setPaymentSessionId($payLinkSession['id']);
