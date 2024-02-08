@@ -23,7 +23,7 @@ class Reservation {
     public function getDatesRange() {
         return $this->datesRange;
     }
-    public function getOptions() {
+    public function getSelectedOptions() {
         return $this->selectedOptions;
     }
 
@@ -32,33 +32,18 @@ class Reservation {
         $carPrice = new PriceCalculator($this->car->getRentalPeriodPrices(), $this->datesRange, $this->car->getFranchise());
         return $carPrice->getTotalMessage();
     }
-    public function getCarProduct() {
-        $total = $this->getCarTotal();
-        $product = new Product($this->car->getName(), $total, $this->car->getImage());
-        return $product->get();
-    }
 
     public function getOptionsTotal() {
         $optionsTotal = array();
-        foreach ($this->selectedOptions as $option) {
+        foreach ($this->getSelectedOptions() as $option) {
             $option = new PriceCalculator($option['rentalPeriodPrices'], $this->datesRange);
             $optionsTotal[] = $option->getTotalMessage();
         }
         return $optionsTotal;
     }
-    public function getOptionsProducts() {
-        $products = array();
-        foreach ($this->selectedOptions as $option) {
-            $optionPrice = new PriceCalculator($option['rentalPeriodPrices'], $this->datesRange);
-            $optionsTotal = $optionPrice->getTotalMessage();
-            $product = new Product($option['name'], $optionsTotal);
-            $products[] = $product->get();
-        }
-        return $products;
-    }
     public function getOptionsText() {
         $options_strings = [];
-        foreach ($this->selectedOptions as $option) {
+        foreach ($this->getSelectedOptions() as $option) {
             $options_strings[] = "{$option['name']}";
         }
         return implode(', ', $options_strings);

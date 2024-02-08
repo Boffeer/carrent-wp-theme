@@ -7,10 +7,11 @@ class Product {
     private $image;
     private $currency = 'eur';
 
+    private $metadata;
+
 
     public function __construct($name, $priceTotalMessage, $image = null) {
         $this->name = $this->formatName($name, $priceTotalMessage);
-        $this->description = $this->formatDescription();
         $this->price = $this->formatPrice($priceTotalMessage);
         $this->image = $image;
     }
@@ -22,8 +23,14 @@ class Product {
         $name .= ")";
         return $name;
     }
-    public function formatDescription() {
-        return 'desc';
+    public function setDescription($metadata) {
+        $description = "Start: {$metadata['location_start']}, {$metadata['date_start']}.  End: {$metadata['location_end']}, {$metadata['date_end']}.";
+
+        if (!empty($metadata['flight_number'])) {
+            $description .= "\n Flight number: {$metadata['flight_number']}";
+        }
+
+        $this->description = $description;
     }
     public function formatPrice($priceTotalMessage) {
         return $priceTotalMessage['price'] * 100;

@@ -464,14 +464,6 @@ add_action('wp_ajax_get_stripe_paylink', 'get_stripe_paylink');
 add_action('wp_ajax_nopriv_get_stripe_paylink', 'get_stripe_paylink');
 function get_stripe_paylink()
 {
-//    $order = new Order($_POST);
-//    $booking = new Booking($order);
-//
-//    $payLinkSession = Stripe::getPayLink($order, $booking);
-//
-//    $booking->setPaymentSessionId($payLinkSession['id']);
-
-
     $car = new Car($_POST['post_id']);
     $datesRange = new DatesRange($_POST['date_start'], $_POST['time_start'], $_POST['date_end'], $_POST['time_end']);
 
@@ -495,11 +487,10 @@ function get_stripe_paylink()
 
     $checkoutSession = new CheckoutSession($reservation, $client);
     $checkoutSessionData = $checkoutSession->create();
-    log_telegram(json_encode($checkoutSessionData));
 
 
     echo json_encode(array(
-        'session' => $checkoutSessionData,
+//        'session' => $checkoutSessionData,
         'total' => $reservation->getTotal(),
         'paylink' => $checkoutSessionData['url'],
     ), JSON_UNESCAPED_UNICODE);

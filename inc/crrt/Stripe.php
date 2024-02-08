@@ -39,8 +39,6 @@ class Stripe
             'client_reference_id' => $client->getPhone(),
         ];
 
-//        log_telegram(json_encode($data));
-
         $post_data = http_build_query($data);
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $stripe_api_url);
@@ -53,6 +51,5 @@ class Stripe
         curl_close($ch);
 
         return json_decode($response, true);
-//        return $session_data['url'];
     }
 }

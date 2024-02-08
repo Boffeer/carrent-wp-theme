@@ -5,19 +5,46 @@ class CheckoutSession {
     private Client $client;
     private Car $car;
     private $products = array();
-    private $bookingPostId;
-    private $metadata;
+    private $bookingPostId = null;
 
     public function __construct(Reservation $reservation, Client $client) {
         $this->reservation = $reservation;
         $this->client = $client;
         $this->car = $reservation->getCar();
 
-        $this->products[] = $reservation->getCarProduct();
-        foreach ($reservation->getOptionsProducts() as $product) {
+        $this->products[] = $this->getCarProduct();
+        foreach ($this->getOptionsProducts() as $product) {
             $this->products[] = $product;
         }
     }
+
+    public function getCarProduct() {
+        $total = $this->reservation->getCarTotal();
+        $product = new Product(
+            $this->car->getName(),
+            $total,
+            $this->car->getImage(),
+
+        );
+        $product->setDescription($this->getMetadata());
+        return $product->get();
+    }
+
+    public function getOptionsProducts() {
+        $products = array();
+        foreach ($this->reservation->getSelectedOptions() as $option) {
+            $optionPrice = new PriceCalculator($option['rentalPeriodPrices'], $this->reservation->getDatesRange());
+            $optionsTotal = $optionPrice->getTotalMessage();
+            $product = new Product(
+                $option['name'],
+                $optionsTotal,
+                null,
+            );
+            $products[] = $product->get();
+        }
+        return $products;
+    }
+
 
     public function getBookingPostId() {
         return $this->bookingPostId;
@@ -74,7 +101,11 @@ class CheckoutSession {
         carbon_set_post_meta( $this->bookingPostId, 'product_id', $this->car->getCarId());
         carbon_set_post_meta( $this->bookingPostId, 'options', $this->reservation->getOptionsText());
 
-        return Stripe::getCheckoutSession($this->reservation, $this->client, $this->getProducts(), $this->getMetadata());
+        $checkoutSession = Stripe::getCheckoutSession($this->reservation, $this->client, $this->getProducts(), $this->getMetadata());
+
+        carbon_set_post_meta( $this->bookingPostId, 'payment_session_id', $checkoutSession['id']);
+
+        return $checkoutSession;
     }
     public function handleComplete() {
 
