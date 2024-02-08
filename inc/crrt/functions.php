@@ -474,6 +474,15 @@ class Car {
         }
     }
 
+    public function getCarId() {
+        return $this->carId;
+    }
+    public function getName() {
+        return $this->name;
+    }
+    public function getImage() {
+        return $this->image;
+    }
     public function getRentalPeriodPrices() {
         return $this->rentalPeriodPrices;
     }
@@ -540,7 +549,7 @@ class PriceCalculator {
         if ($this->franchise === 0) return 0;
         return $this->franchise * $this->hours;
     }
-    private function calculateTotal() {
+    public function calculateTotal() {
         return $this->getTotalForDays() + $this->getTotalFranchise();
     }
 
@@ -564,6 +573,55 @@ class PriceCalculator {
     }
 }
 
+class Product {
+    private $name;
+    private $description;
+    private $price;
+    private $image;
+    private $currency = 'eur';
+
+
+    public function __construct($name, $priceTotalMessage, $image = null) {
+        $this->name = $this->formatName($name, $priceTotalMessage);
+        $this->description = $this->formatDescription();
+        $this->price = $this->formatPrice($priceTotalMessage);
+        $this->image = $image;
+    }
+    public function formatName($name, $priceTotalMessage) {
+        $name = "{$name} ({$priceTotalMessage['full_days_text']}";
+        if (!empty($priceTotalMessage['extra_hours'])) {
+            $name .= " {$priceTotalMessage['extra_hours_text']}";
+        }
+        $name .= ")";
+        return $name;
+    }
+    public function formatDescription() {
+        return 'desc';
+    }
+    public function formatPrice($priceTotalMessage) {
+        return $priceTotalMessage['price'] * 100;
+    }
+
+    public function get() {
+        $productData = array(
+            'name' => $this->name,
+            'description' => $this->description,
+        );
+        if (!empty($this->image)) {
+            $productData['images'] = [$this->image];
+        }
+
+        return array(
+            'price_data' => [
+                'currency' => $this->currency,
+                'product_data' => $productData,
+                'unit_amount' => $this->price, // Amount in cents (e.g., $19.99)
+            ],
+            'quantity' => 1,
+        );
+    }
+}
+
 class Reservation {
     private Car $car;
     private array $selectedOptions = [];
@@ -580,10 +638,25 @@ class Reservation {
         }
     }
 
+    public function getCar() {
+        return $this->car;
+    }
+    public function getDatesRange() {
+        return $this->datesRange;
+    }
+    public function getOptions() {
+        return $this->selectedOptions;
+    }
+
     public function getCarTotal(): array
     {
         $carPrice = new PriceCalculator($this->car->getRentalPeriodPrices(), $this->datesRange, $this->car->getFranchise());
         return $carPrice->getTotalMessage();
+    }
+    public function getCarProduct() {
+        $total = $this->getCarTotal();
+        $product = new Product($this->car->getName(), $total, $this->car->getImage());
+        return $product->get();
     }
 
     public function getOptionsTotal() {
@@ -593,6 +666,23 @@ class Reservation {
             $optionsTotal[] = $option->getTotalMessage();
         }
         return $optionsTotal;
+    }
+    public function getOptionsProducts() {
+        $products = array();
+        foreach ($this->selectedOptions as $option) {
+            $optionPrice = new PriceCalculator($option['rentalPeriodPrices'], $this->datesRange);
+            $optionsTotal = $optionPrice->getTotalMessage();
+            $product = new Product($option['name'], $optionsTotal);
+            $products = $product->get();
+        }
+        return $products;
+    }
+    public function getOptionsText() {
+        $options_strings = [];
+        foreach ($this->selectedOptions as $option) {
+            $options_strings[] = "{$option['name']}";
+        }
+        return implode(', ', $options_strings);
     }
 
     public function getTotal() {
@@ -628,6 +718,122 @@ class Reservation {
         return $cart;
     }
 }
+
+class CheckoutSession {
+    private Reservation $reservation;
+    private Client $client;
+    private Car $car;
+    private $products = array();
+    private $booking_post_id;
+    private $metadata;
+
+    public function __construct(Reservation $reservation, Client $client) {
+        $this->reservation = $reservation;
+        $this->client = $client;
+        $this->car = $reservation->getCar();
+
+        $this->products[] = $reservation->getCarProduct();
+        foreach ($reservation->getOptionsProducts() as $product) {
+            $this->products[] = $product;
+        }
+    }
+
+    public function getProducts() {
+        return $this->products;
+    }
+
+    public function setMetadata($bookingId) {
+            $locations = $this->client->getLocations();
+            $datesRange = $this->reservation->getDatesRange();
+            $this->metadata = array(
+                'user_phone' => $this->client->getPhone(),
+                'user_email' => $this->client->getEmail(),
+                'product_id' => $this->car->getCarId(),
+                'booking_id' => $bookingId,
+                'date_start' => $datesRange['start'],
+                'date_end' => $datesRange['end'],
+                'location_start' => $locations['start'],
+                'location_end' => $locations['end'],
+                'flight_number' => $this->client->getFlightNumber(),
+                'options' => $this->reservation->getOptionsText(),
+                'agree' => $this->client->getAgreeTerms(),
+                'date_of_birth' => $this->client->getDateOfBirth(),
+            );
+    }
+
+    public function create() {
+        $title = "Пользователь начал бронирование {$this->client->getPhone()} - {$this->client->getEmail()}";
+        $post_data = array(
+            'post_title' => $title,
+            'post_content' => '',
+            'post_status' => 'publish',
+            'post_type' => 'car_booking',
+        );
+        $this->booking_post_id = wp_insert_post($post_data);
+
+        carbon_set_post_meta( $this->booking_post_id, 'booking_id', $this->booking_post_id);
+        carbon_set_post_meta( $this->booking_post_id, 'phone', $this->client->getPhone());
+        carbon_set_post_meta( $this->booking_post_id, 'email', $this->client->getEmail());
+        carbon_set_post_meta( $this->booking_post_id, 'flight_number', $this->client->getFlightNumber());
+        carbon_set_post_meta( $this->booking_post_id, 'agree', $this->client->getAgreeTerms());
+        carbon_set_post_meta( $this->booking_post_id, 'date_of_birth', $this->client->getDateOfBirth());
+
+        $locations = $this->client->getLocations();
+        carbon_set_post_meta( $this->booking_post_id, 'location_start', $locations['start']);
+        carbon_set_post_meta( $this->booking_post_id, 'location_end', $locations['end']);
+
+        $datesRange = $this->reservation->getDatesRange();
+        carbon_set_post_meta( $this->booking_post_id, 'date_start', $datesRange['start']);
+        carbon_set_post_meta( $this->booking_post_id, 'date_end', $datesRange['end']);
+
+        carbon_set_post_meta( $this->booking_post_id, 'product_id', $this->car->getCarId());
+        carbon_set_post_meta( $this->booking_post_id, 'options', $this->reservation->getOptionsText());
+    }
+    public function handleComplete() {
+
+    }
+    public function handleExprire() {
+
+    }
+}
+
+class Client {
+    private string $phone;
+    private string $email;
+    private string $dateOfBirth;
+    private array $locations;
+    private string $flightNumber;
+    private string $agreeTerms;
+
+    public function __construct(string $phone, string $email, string $dateOfBirth, string $agreeTerms, string $flightNumber, array $locations) {
+        $this->phone = $phone;
+        $this->email = $email;
+        $this->dateOfBirth = $dateOfBirth;
+        $this->locations = $locations;
+        $this->flightNumber = $flightNumber;
+        $this->agreeTerms = $agreeTerms;
+    }
+
+    public function getPhone() {
+        return $this->phone;
+    }
+    public function getEmail() {
+        return $this->email;
+    }
+    public function getDateOfBirth() {
+        return $this->dateOfBirth;
+    }
+    public function getAgreeTerms() {
+        return $this->agreeTerms;
+    }
+    public function getFlightNumber() {
+        return $this->flightNumber;
+    }
+    public function getLocations() {
+        return $this->locations;
+    }
+}
+
 
 class DatesRange {
     private array $datesRange = array(
@@ -705,13 +911,10 @@ add_action('wp_ajax_get_order_total', 'get_order_total');
 add_action('wp_ajax_nopriv_get_order_total', 'get_order_total');
 function get_order_total()
 {
-    $order = new Order($_POST);
-
     $car = new Car($_POST['post_id']);
     $datesRange = new DatesRange($_POST['date_start'], $_POST['time_start'], $_POST['date_end'], $_POST['time_end']);
 
     $reservation = new Reservation($car, $_POST['options'], $datesRange);
-    log_telegram(json_encode($reservation->getTotal()));
 
     echo json_encode(array(
         'total' => $reservation->getTotal(),
@@ -724,17 +927,43 @@ add_action('wp_ajax_get_stripe_paylink', 'get_stripe_paylink');
 add_action('wp_ajax_nopriv_get_stripe_paylink', 'get_stripe_paylink');
 function get_stripe_paylink()
 {
-    $order = new Order($_POST);
-    $booking = new Booking($order);
+//    $order = new Order($_POST);
+//    $booking = new Booking($order);
+//
+//    $payLinkSession = Stripe::getPayLink($order, $booking);
+//
+//    $booking->setPaymentSessionId($payLinkSession['id']);
 
-    $payLinkSession = Stripe::getPayLink($order, $booking);
 
-    $booking->setPaymentSessionId($payLinkSession['id']);
+    $car = new Car($_POST['post_id']);
+    $datesRange = new DatesRange($_POST['date_start'], $_POST['time_start'], $_POST['date_end'], $_POST['time_end']);
+
+    $locations = array(
+        'start'  => $_POST['location_start'],
+        'end'  => $_POST['location_start'],
+    );
+    if (isset($_POST['location_end'])) {
+        $locations['end'] = $_POST['location_end'];
+    }
+    $client = new Client(
+        $_POST['user_phone'],
+        $_POST['user_email'],
+        $_POST['dob'],
+        $_POST['agree'],
+        $_POST['flight_number'],
+        $locations
+    );
+    $reservation = new Reservation($car, $_POST['options'], $datesRange);
+
+    $checkoutSession = new CheckoutSession($reservation, $client);
+    $checkoutSession->create();
+
 
     echo json_encode(array(
 //        'session' => $payLinkSession,
-        'total' => $order->getTotal(),
-        'paylink' => $payLinkSession['url'],
+        'total' => $reservation->getTotal(),
+        'paylink' => null,
+//        'paylink' => $payLinkSession['url'],
     ), JSON_UNESCAPED_UNICODE);
     wp_die();
 }
