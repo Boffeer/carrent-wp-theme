@@ -29,11 +29,12 @@ get_header();
         $socials = get_socials(THEME_OPTIONS['socials']);
         $car_booking_id = isset($_GET['car_booking_id']) ? $_GET['car_booking_id'] : false;
 
-        if (!$car_booking_id) {
-            wp_redirect(home_url());
-            exit;
-        }
+//        if (!$car_booking_id) {
+//            wp_redirect(home_url());
+//            exit;
+//        }
 
+        /*
         $args = array(
             'post_type' => 'car_booking',
             'posts_per_page' => 1,
@@ -45,17 +46,16 @@ get_header();
                 ),
             ),
         );
+        */
 
-        $booking = new WP_Query($args);
-        $booking_id = null;
+        $booking = get_post($car_booking_id);
+        $booking_id = $car_booking_id;
 
-        if ($booking->have_posts()) {
-//            wp_redirect(home_url());
-//            exit;
-            $booking_id = $booking->posts[0]->ID;
+//        if ($booking->have_posts()) {
+//            $booking_id = $booking->posts[0]->ID;
             $booking_info = getBookingInfo($booking_id);
             $car = get_car_content($booking_info['product_id']);
-        }
+//        }
 
         ?>
         <div class="container faq__container">

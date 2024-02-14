@@ -534,116 +534,25 @@ function handle_stripe_webhook() {
     $body = @file_get_contents('php://input');
     $event_json = json_decode($body);
 
-//    echo json_encode(array('test' => 'test', 'event' => $event_json));
-    log_telegram(json_encode($event_json));
+//    log_telegram(json_encode($event_json));
 
-    if ($event_json->type === 'charge.succeeded') {
-        $event_id = $event_json->id;
+    $checkoutSessionId = $event_json->data->object->id;
+    if ($event_json->type === 'checkout.session.completed') {
+        $reservationId = CheckoutSession::handleComplete($event_json);
 
-        $amount = $event_json->data->object->amount;
-        $email = $event_json->data->object->billing_details->email;
-        $name = $event_json->data->object->billing_details->name;
+        $booking = create_booking($reservationId);
+        carbon_set_post_meta( $reservationId, 'crm_booking_id', $booking['booking']['id']);
+        $amount = carbon_get_post_meta( $reservationId, 'amount');
 
-        $receipt_url = $event_json->data->object->receipt_url;
+        send_email_booking($reservationId);
 
-        $phone = $event_json->data->object->metadata->user_phone;
-        $product_id = $event_json->data->object->metadata->product_id;
-        $date_start = $event_json->data->object->metadata->date_start;
-        $date_end = $event_json->data->object->metadata->date_end;
-        $time_start = $event_json->data->object->metadata->time_start;
-        $time_end = $event_json->data->object->metadata->time_end;
-        $location_start = $event_json->data->object->metadata->location_start;
-        $location_end = $event_json->data->object->metadata->location_end;
-        $booking_id = $event_json->data->object->metadata->booking_id;
-        $flight_number = $event_json->data->object->metadata->flight_number;
-        $agree = $event_json->data->object->metadata->agree;
-        $date_of_birth = $event_json->data->object->metadata->date_of_birth;
-        $options = $event_json->data->object->metadata->options;
-
-
-
-        $payment_intent = $event_json->data->object->payment_intent;
-        $created = $event_json->data->object->created;
-
-
-        $title = $phone .' - '. $name .' - '. $email .' - '. $payment_intent;
-        $post_data = array(
-            'post_title' => $title, // Заголовок вашего кастомного поста
-            'post_content' => '',
-            'post_status' => 'publish',
-            'post_type' => 'car_booking', // Тип вашего кастомного поста
-        );
-
-        // Создайте кастомный пост
-        $post_id = wp_insert_post($post_data);
-
-        if (!is_wp_error($post_id)) {
-            // Set the post slug to be the post ID
-            $post_data = array(
-                'ID'  => $post_id,
-                'post_name' => $booking_id,
-            );
-            wp_update_post($post_data);
+        if (!empty($amount)) {
+            $payment = create_payment($booking['booking']['id'], (int) $amount / 100);
         }
+    }
 
-        // Выполните другие действия, если необходимо
-        carbon_set_post_meta( $post_id, 'phone', $phone);
-        carbon_set_post_meta( $post_id, 'email', $email);
-        carbon_set_post_meta( $post_id, 'name', $name);
-        carbon_set_post_meta( $post_id, 'created', $created);
-        carbon_set_post_meta( $post_id, 'amount', $amount);
-        carbon_set_post_meta( $post_id, 'id', $event_id);
-        carbon_set_post_meta( $post_id, 'json', json_encode($event_json));
-        carbon_set_post_meta( $post_id, 'product_id', $product_id);
-        carbon_set_post_meta( $post_id, 'payment_intent', $payment_intent);
-        carbon_set_post_meta( $post_id, 'booking_id', $booking_id);
-
-        carbon_set_post_meta( $post_id, 'date_start', $date_start);
-        carbon_set_post_meta( $post_id, 'date_end', $date_end);
-        carbon_set_post_meta( $post_id, 'time_start', $time_start);
-        carbon_set_post_meta( $post_id, 'time_end', $time_end);
-        carbon_set_post_meta( $post_id, 'location_start', $location_start);
-        carbon_set_post_meta( $post_id, 'location_end', $location_end);
-        carbon_set_post_meta( $post_id, 'flight_number', $flight_number);
-        carbon_set_post_meta( $post_id, 'receipt_url', $receipt_url);
-
-        carbon_set_post_meta( $post_id, 'options', $options);
-
-        carbon_set_post_meta( $post_id, 'agree', $agree);
-        carbon_set_post_meta( $post_id, 'date_of_birth', $date_of_birth);
-
-        $booking = create_booking($post_id);
-
-        $payment = create_payment($booking['booking']['id'], (int) $amount / 100);
-
-        carbon_set_post_meta( $post_id, 'crm_booking_id', $payment['ids']);
-
-        carbon_set_post_meta( $post_id, 'crm_booking_id', $booking['booking']['id']);
-
-        $gallery = carbon_get_post_meta($product_id, 'photos');
-        $car_thumb = '';
-        if (!empty($gallery)) {
-            $car_thumb = get_image_url_by_id($gallery[0]);
-        }
-        send_email_booking(array(
-            'name' => $name,
-            'date_of_birth' => $date_of_birth,
-            'email' => $email,
-            'phone' => $phone,
-//            'crm_booking_id' => $payment['ids'][0],
-            'crm_booking_id' => $booking['booking']['id'],
-            'location_start' => $location_start,
-            'date_start' => $date_start,
-            'date_end' => $date_end,
-            'flight_number' => $flight_number,
-            'receipt_url' => $receipt_url,
-            'options' => $options,
-            'car_name' => carbon_get_post_meta($product_id, 'car_name'),
-            'car_thumb'=> $car_thumb,
-        ));
-    } elseif ($event_json->type === 'customer.discount.created') {
+    if ($event_json->type === 'customer.discount.created') {
         $coupon = $event_json->data->object->coupon;
-
 
         $checkout_session_id = $event_json->data->object->checkout_session;
         $checkout = get_stripe_checkout($checkout_session_id);
@@ -697,35 +606,43 @@ function sortArrayByKeyNames($keyNames, $arrayToSort) {
     return array_merge($sortedArray, $arrayToSort);
 }
 
-function send_email_booking($data) {
+function send_email_booking($reservationId) {
+
+    $data = Reservation::getReservationData($reservationId);
+    log_telegram(json_encode($data));
+    $car = new Car($data['car_post_id']);
+    $carName = $car->getName();
+    $carThumb = $car->getImage();
+
     $to = $data['email'];
-    $subject = "#{$data['crm_booking_id']} {$data['car_name']}: {$data['date_start']} - {$data['date_end']}"; // Тема письма
+    $subject = "#{$data['crm_booking_id']} {$carName}: {$data['start_date']} - {$data['end_date']}"; // Тема письма
 
     $message = '<html><body>';
-    $message .= pll__('Your Car booking: ', 'crrt') . " {$data['crm_booking_id']}" . '<br>';
-    $message .= '<img src="'.$data['car_thumb'].'" style="width: 100%;"/>';
+    $message .= '<strong>' . pll__('Your Car booking: ', 'crrt') . " {$data['crm_booking_id']}" . '</strong><br>';
+    $message .= '<img src="'.$carThumb.'" style="display: block;max-width: 600px; width: 100%;"/>';
     $message .= '<h3>'. pll__('Start', 'crrt') . '</h3>';
-    $message .= '<p>'. $data['location_start'] . '</p>';
-    $message .= '<p>'. $data['date_start'] . '</p><br>';
+    $message .= '<p>'. $data['start_place'] . '</p>';
+    $message .= '<p>'. $data['start_date'] . '</p><br>';
 
     $message .= '<h3>'. pll__('End', 'crrt') . '</h3>';
-    $message .= '<p>'. $data['location_start'] . '</p>';
-    $message .= '<p>'. $data['date_end'] . '</p><br>';
+    $message .= '<p>'. $data['start_place'] . '</p>';
+    $message .= '<p>'. $data['end_date'] . '</p><br>';
+    $message .= '<p>'. $data['options'] . '</p><br>';
 
-    $IGNORE_KEYS = array(
-        'user_file',
-        'date_start',
-        'date_end',
-        'location_start',
-        'crm_booking_id',
-        'car_name',
-        'car_thumb',
-    );
-    foreach ($data as $key => $value) {
-        if (in_array($key, $IGNORE_KEYS)) continue;
-        if (empty($value)) continue;
-        $message .= '<p><strong>' . replacePostKey($key) . ':</strong> ' . $value . '</p>';
-    }
+//    $IGNORE_KEYS = array(
+//        'user_file',
+//        'date_start',
+//        'date_end',
+//        'location_start',
+//        'crm_booking_id',
+//        'car_name',
+//        'car_thumb',
+//    );
+//    foreach ($data as $key => $value) {
+//        if (in_array($key, $IGNORE_KEYS)) continue;
+//        if (empty($value)) continue;
+//        $message .= '<p><strong>' . replacePostKey($key) . ':</strong> ' . $value . '</p>';
+//    }
     $message .= '</body></html>';
 
     $headers = array(
@@ -743,8 +660,10 @@ function create_booking($booking_post_id) {
     $id = $booking_post_id;
     $car_post_id = carbon_get_post_meta($id, 'product_id');
 
-    $date_start = carbon_get_post_meta($id, 'date_start') . ' ' . carbon_get_post_meta($id, 'time_start');
-    $date_end = carbon_get_post_meta($id, 'date_end') . ' ' . carbon_get_post_meta($id, 'time_end');
+    $date_start = carbon_get_post_meta($id, 'date_start');
+    $date_end = carbon_get_post_meta($id, 'date_end');
+
+    $duration = DateHelper::getDatesDuration($date_start, $date_end);
 
     $booking = array(
         'name' => carbon_get_post_meta($id, 'name'),
@@ -755,7 +674,8 @@ function create_booking($booking_post_id) {
         'end_place' =>  carbon_get_post_meta($id, 'location_end'),
         'phone' =>  carbon_get_post_meta($id, 'phone'),
         'email' =>  carbon_get_post_meta($id, 'email'),
-        'days' => count(get_dates_range($date_start, $date_end)),
+        'days' => $duration['full_days'],
+        'additional_hours' => $duration['extra_hours'],
         'price' => (int) carbon_get_post_meta($id, 'amount') / 100,
         'receipt_url' => carbon_get_post_meta($id, 'receipt_url'),
         'flight_number' => carbon_get_post_meta($id, 'flight_number'),
@@ -764,18 +684,28 @@ function create_booking($booking_post_id) {
         'agree' => carbon_get_post_meta($id, 'agree'),
     );
 
-    $description = "Receipt: {$booking['receipt_url']};";
-    if (!empty($booking['flight_number'])) {
-        $description.= "\n\n{$booking['flight_number']};";
+    $description = "";
+
+    if (!empty($booking['options'])) {
+        $description.= "Options: {$booking['options']}; ";
     }
-    if (!empty($booking['agree'])) {
-        $description.= "Is Agree: \n\n{$booking['agree']};";
+    if ($booking['email']) {
+        $description.= "Email: {$booking['email']}; ";
+    }
+    if ($booking['phone']) {
+        $description.= "Phone: {$booking['phone']}; ";
+    }
+    if ($booking['receipt_url']) {
+        $description.= "Receipt: {$booking['receipt_url']}; ";
+    }
+    if (!empty($booking['flight_number'])) {
+        $description.= "Flight number: {$booking['flight_number']}; ";
     }
     if (!empty($booking['date_of_birth'])) {
-        $description.= "Date of birth: \n\n{$booking['date_of_birth']};";
+        $description.= "Date of birth: \n\n{$booking['date_of_birth']}; ";
     }
-    if (!empty($booking['options'])) {
-        $description.= " \n\n{$booking['options']};";
+    if (!empty($booking['agree'])) {
+        $description.= "Is Agree with Privacy: \n\n{$booking['agree']}; ";
     }
 
 
@@ -811,6 +741,7 @@ function create_booking($booking_post_id) {
 //        "description" => "",
         "description" => $description,
         "days" => $booking['days'],
+        "additional_hours" => $booking['additional_hours'],
     );
 
     $data_response = wp_remote_post($data_url, [

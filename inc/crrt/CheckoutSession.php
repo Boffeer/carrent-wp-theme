@@ -107,9 +107,73 @@ class CheckoutSession {
 
         return $checkoutSession;
     }
-    public function handleComplete() {
+    public static function getPost($paymentSessionId) {
+
+        $args = array(
+            'post_type' => 'car_booking',
+            'meta_query' => array(
+                array(
+                    'key' => 'payment_session_id',
+                    'value' => $paymentSessionId,
+                    'compare' => '=',
+                ),
+            ),
+        );
+
+        $query = new WP_Query($args);
+
+        $postId = null;
+
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+
+                $postId = get_the_ID();
+                // Здесь вы можете использовать информацию о найденном посте
+//                the_title();
+//                the_content();
+                // и так далее
+            }
+            wp_reset_postdata(); // сброс данных о посте
+        }
+
+        return $postId;
 
     }
+
+    public static function handleComplete($event) {
+        $checkoutSessionId = $event->data->object->id;
+        $reservationId = self::getPost($checkoutSessionId);
+        $metadata = $event->data->object->metadata;
+
+        $customerName = null;
+        if (isset($event->data->object->customer_details->name)) {
+            $customerName = $event->data->object->customer_details->name;
+        }
+
+        $title = "Успешная бронь: {$metadata->user_email} - {$metadata->user_phone}";
+        if (!empty($customerName)) {
+            $title .= " - {$customerName}";
+            carbon_set_post_meta($reservationId, 'name', $customerName);
+        }
+        $post_data = array(
+            'ID' => $reservationId,
+            'post_title' => $title,
+        );
+        $post_updated = wp_update_post($post_data);
+
+        $amount = $event->data->object->amount_total;
+        carbon_set_post_meta($reservationId, 'amount', $amount);
+        carbon_set_post_meta($reservationId, 'json', $event);
+
+        $receipt_url = $event->data->object->receipt_url;
+        if ($receipt_url) {
+            carbon_set_post_meta( $reservationId, 'receipt_url', $receipt_url);
+        }
+
+        return $reservationId;
+    }
+
     public function handleExprire() {
 
     }

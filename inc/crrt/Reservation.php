@@ -88,4 +88,41 @@ class Reservation {
     public function getCancelPage() {
         return $this->cancelPage;
     }
+
+    public static function getReservationData($id) {
+        $car_post_id = carbon_get_post_meta($id, 'product_id');
+
+        $date_start = carbon_get_post_meta($id, 'date_start');
+        $date_end = carbon_get_post_meta($id, 'date_end');
+
+        $duration = DateHelper::getDatesDuration($date_start, $date_end);
+
+        $price = carbon_get_post_meta($id, 'amount');
+        if (!empty($price)) {
+            $price = (int) $price / 100;
+        }
+
+        $booking = array(
+            'name' => carbon_get_post_meta($id, 'name'),
+            'car_post_id' => $car_post_id,
+            'car_id' => carbon_get_post_meta($car_post_id, 'rentprog_id'),
+            'start_date' => $date_start,
+            'end_date' => $date_end,
+            'start_place' =>  carbon_get_post_meta($id, 'location_start'),
+            'end_place' =>  carbon_get_post_meta($id, 'location_end'),
+            'phone' =>  carbon_get_post_meta($id, 'phone'),
+            'email' =>  carbon_get_post_meta($id, 'email'),
+            'days' => $duration['full_days'],
+            'additional_hours' => $duration['extra_hours'],
+            'price' => $price,
+            'receipt_url' => carbon_get_post_meta($id, 'receipt_url'),
+            'flight_number' => carbon_get_post_meta($id, 'flight_number'),
+            'options' => carbon_get_post_meta($id, 'options'),
+            'date_of_birth' => carbon_get_post_meta($id, 'date_of_birth'),
+            'agree' => carbon_get_post_meta($id, 'agree'),
+            'crm_booking_id' => carbon_get_post_meta($id, 'crm_booking_id'),
+        );
+
+        return $booking;
+    }
 }
