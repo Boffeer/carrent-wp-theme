@@ -609,7 +609,6 @@ function sortArrayByKeyNames($keyNames, $arrayToSort) {
 function send_email_booking($reservationId) {
 
     $data = Reservation::getReservationData($reservationId);
-    log_telegram(json_encode($data));
     $car = new Car($data['car_post_id']);
     $carName = $car->getName();
     $carThumb = $car->getImage();
@@ -686,6 +685,9 @@ function create_booking($booking_post_id) {
 
     $description = "";
 
+    if ($booking['price'] == 0) {
+        $description.= "Free;";
+    }
     if (!empty($booking['options'])) {
         $description.= "Options: {$booking['options']}; ";
     }

@@ -120,6 +120,25 @@
 
             </div>
 
+            <div class="header__languages">
+                <div class="menu__nav-item menu__nav-item--has-children">
+                    <span class="menu__nav-link"><?php pll_e($menu['title'], 'crrt'); ?></span>
+                    <div class="menu__nav-dropdown">
+                        <div class="menu__nav-dropdown-content">
+                            <?php foreach ($languages as $language) : ?>
+                                <?php
+                                $name = $language['name'];
+                                $url = $language['url'];
+                                ?>
+                                <a href="<?php echo esc_url($url); ?>" class="menu__nav-link menu__nav-dropdown-link <?php echo $language['current_lang'] ? 'active' : '';?>">
+                                    <?php echo esc_html($name); ?>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <button class="burger header__burger" id="burger">
                 <span class="burger__line"></span>
                 <span class="burger__line"></span>

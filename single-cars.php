@@ -144,18 +144,17 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                             <?php endforeach; ?>
                         </ul>
                     </div>
-                    <?php /*
                     <div class="select hero__bookform-select">
                         <select class="select__input"
                                 name="location_end"
                                 tabindex="-1"
                                 required>
-                            <option value="" disabled selected><?php pll_e('Flight number','crrt'); ?></option>
+                            <option value="" disabled selected><?php pll_e('A drop-off location','crrt'); ?></option>
                             <?php foreach ($locations_to as $location) : ?>
                                 <option value="<?php echo $location; ?>"><?php echo $location; ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <button class="select__toggle" type="button"><?php pll_e('Flight number','crrt'); ?></button>
+                        <button class="select__toggle" type="button"><?php pll_e('A drop-off location','crrt'); ?></button>
                         <ul class="select__list">
                             <?php foreach ($locations_to as $location) : ?>
                                 <li>
@@ -164,7 +163,6 @@ $homepage_id = pll_get_post(get_option('page_on_front'));
                             <?php endforeach; ?>
                         </ul>
                     </div>
-                    */?>
 
                     <label class="input js_form__control">
                         <input

@@ -142,6 +142,8 @@ class CheckoutSession {
     }
 
     public static function handleComplete($event) {
+
+//        log_telegram(json_encode($event));
         $checkoutSessionId = $event->data->object->id;
         $reservationId = self::getPost($checkoutSessionId);
         $metadata = $event->data->object->metadata;
